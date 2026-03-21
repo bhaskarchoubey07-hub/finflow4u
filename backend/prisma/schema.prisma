@@ -1,0 +1,91 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  BORROWER
+  LENDER
+}
+
+enum LoanStatus {
+  PENDING
+  ACTIVE
+  FUNDED
+  CLOSED
+  DEFAULTED
+}
+
+enum RepaymentStatus {
+  PENDING
+  PAID
+  OVERDUE
+  DEFAULTED
+}
+
+model User {
+  id           String        @id @default(cuid())
+  name         String
+  email        String        @unique
+  passwordHash String        @map("password_hash")
+  role         UserRole
+  creditScore  Int?          @map("credit_score")
+  createdAt    DateTime      @default(now()) @map("created_at")
+  updatedAt    DateTime      @updatedAt @map("updated_at")
+  loans        LoanRequest[]
+  investments  Investment[]
+
+  @@map("users")
+}
+
+model LoanRequest {
+  id               String      @id @default(cuid())
+  borrowerId       String      @map("borrower_id")
+  amount           Decimal     @db.Decimal(12, 2)
+  interestRate     Decimal     @map("interest_rate") @db.Decimal(5, 2)
+  riskGrade        String      @map("risk_grade")
+  status           LoanStatus  @default(PENDING)
+  purpose          String?
+  termMonths       Int         @default(12) @map("term_months")
+  annualIncome     Decimal     @db.Decimal(12, 2) @map("annual_income")
+  existingDebt     Decimal     @db.Decimal(12, 2) @map("existing_debt")
+  employmentStatus String      @map("employment_status")
+  emiAmount        Decimal     @db.Decimal(12, 2) @map("emi_amount")
+  createdAt        DateTime    @default(now()) @map("created_at")
+  updatedAt        DateTime    @updatedAt @map("updated_at")
+  borrower         User        @relation(fields: [borrowerId], references: [id])
+  investments      Investment[]
+  repayments       Repayment[]
+
+  @@map("loan_requests")
+}
+
+model Investment {
+  id             String      @id @default(cuid())
+  lenderId       String      @map("lender_id")
+  loanId         String      @map("loan_id")
+  amountInvested Decimal     @db.Decimal(12, 2) @map("amount_invested")
+  createdAt      DateTime    @default(now()) @map("created_at")
+  lender         User        @relation(fields: [lenderId], references: [id])
+  loan           LoanRequest @relation(fields: [loanId], references: [id])
+
+  @@map("investments")
+}
+
+model Repayment {
+  id         String          @id @default(cuid())
+  loanId     String          @map("loan_id")
+  amountPaid Decimal         @db.Decimal(12, 2) @map("amount_paid")
+  dueDate    DateTime        @map("due_date")
+  paidAt     DateTime?       @map("paid_at")
+  status     RepaymentStatus @default(PENDING)
+  createdAt  DateTime        @default(now()) @map("created_at")
+  updatedAt  DateTime        @updatedAt @map("updated_at")
+  loan       LoanRequest     @relation(fields: [loanId], references: [id])
+
+  @@map("repayments")
+}

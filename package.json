@@ -1,0 +1,10 @@
+{
+  "name": "p2p-lending-workspace",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "install:all": "npm --prefix backend install && npm --prefix frontend install",
+    "dev": "node scripts/dev.mjs",
+    "dev:down": "docker compose down -v"
+  }
+}
