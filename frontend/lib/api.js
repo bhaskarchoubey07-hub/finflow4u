@@ -16,7 +16,14 @@ export async function apiRequest(path, options = {}) {
   const data = await response.json().catch(() => ({}));
 
   if (!response.ok) {
-    throw new Error(data.message || "Request failed");
+    const validationErrors =
+      data?.errors?.bodyErrors?.join?.(", ") ||
+      Object.values(data?.errors?.fieldErrors || {})
+        .flat()
+        .filter(Boolean)
+        .join(", ");
+
+    throw new Error(data.message || validationErrors || "Request failed");
   }
 
   return data;
