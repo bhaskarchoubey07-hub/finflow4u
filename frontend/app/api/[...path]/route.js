@@ -5,24 +5,34 @@ const UPSTREAM_API_URL = RAW_UPSTREAM_API_URL.startsWith("http")
   : `http://${RAW_UPSTREAM_API_URL.replace(/\/$/, "")}`;
 
 async function forwardRequest(request, context) {
-  const segments = context.params.path || [];
-  const targetUrl = `${UPSTREAM_API_URL}/${segments.join("/")}${new URL(request.url).search}`;
+  const { path = [] } = await context.params;
+  const targetUrl = `${UPSTREAM_API_URL}/${path.join("/")}${new URL(request.url).search}`;
   const headers = new Headers(request.headers);
 
   headers.delete("host");
 
-  const response = await fetch(targetUrl, {
-    method: request.method,
-    headers,
-    body: request.method === "GET" || request.method === "HEAD" ? undefined : await request.text(),
-    cache: "no-store"
-  });
+  try {
+    const response = await fetch(targetUrl, {
+      method: request.method,
+      headers,
+      body: request.method === "GET" || request.method === "HEAD" ? undefined : await request.text(),
+      cache: "no-store"
+    });
 
-  return new Response(response.body, {
-    status: response.status,
-    statusText: response.statusText,
-    headers: response.headers
-  });
+    return new Response(response.body, {
+      status: response.status,
+      statusText: response.statusText,
+      headers: response.headers
+    });
+  } catch (error) {
+    return Response.json(
+      {
+        message: "Frontend could not reach the backend API.",
+        details: error.message
+      },
+      { status: 502 }
+    );
+  }
 }
 
 export async function GET(request, context) {
