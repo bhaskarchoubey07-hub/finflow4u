@@ -182,7 +182,7 @@ This repo includes a backend-only Render Blueprint file at [render.yaml](render.
 Example:
 
 ```text
-https://your-vercel-app.vercel.app,http://localhost:3000
+https://your-vercel-app.vercel.app,https://*.vercel.app,http://localhost:3000
 ```
 
 5. Deploy the Blueprint.
@@ -216,7 +216,7 @@ Once Vercel gives you the final production domain:
 Recommended `CLIENT_URLS` value:
 
 ```text
-https://your-vercel-app.vercel.app,http://localhost:3000
+https://your-vercel-app.vercel.app,https://*.vercel.app,http://localhost:3000
 ```
 
 ### Deployment Environment Variables

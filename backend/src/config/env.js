@@ -10,12 +10,17 @@ required.forEach((key) => {
   }
 });
 
+const clientOrigins = (process.env.CLIENT_URLS || process.env.CLIENT_URL || "http://localhost:3000")
+  .split(",")
+  .map((item) => item.trim())
+  .filter(Boolean);
+
 module.exports = {
   port: Number(process.env.PORT || 5000),
   databaseUrl: process.env.DATABASE_URL,
   jwtSecret: process.env.JWT_SECRET,
-  clientUrls: (process.env.CLIENT_URLS || process.env.CLIENT_URL || "http://localhost:3000")
-    .split(",")
-    .map((item) => item.trim())
-    .filter(Boolean)
+  clientUrls: clientOrigins.filter((origin) => !origin.includes("*")),
+  clientUrlPatterns: clientOrigins
+    .filter((origin) => origin.includes("*"))
+    .map((pattern) => new RegExp(`^${pattern.replace(/[.+?^${}()|[\]\\]/g, "\\$&").replaceAll("\\*", ".*")}$`))
 };
