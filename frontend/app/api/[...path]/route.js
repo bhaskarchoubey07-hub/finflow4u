@@ -10,6 +10,8 @@ async function forwardRequest(request, context) {
   const headers = new Headers(request.headers);
 
   headers.delete("host");
+  headers.delete("origin");
+  headers.delete("referer");
 
   try {
     const response = await fetch(targetUrl, {
