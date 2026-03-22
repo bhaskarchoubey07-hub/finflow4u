@@ -227,6 +227,8 @@ Render backend:
 - `JWT_SECRET` is generated automatically
 - `CLIENT_URLS` must be set manually
 
+If you are using Render's free web service tier, `Pre-Deploy Command` may not be available. This repo's backend `start` script runs `prisma migrate deploy` before booting the API so the database schema is still applied on startup.
+
 Vercel frontend:
 
 - `NEXT_PUBLIC_API_URL` must point to the public Render backend URL
