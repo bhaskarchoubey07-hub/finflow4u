@@ -14,13 +14,31 @@ const errorHandler = require("./middleware/errorHandler");
 
 const app = express();
 
+function isAllowedOrigin(origin) {
+  if (!origin) {
+    return true;
+  }
+
+  if (env.clientUrls.includes(origin)) {
+    return true;
+  }
+
+  if (env.clientUrlPatterns.some((pattern) => pattern.test(origin))) {
+    return true;
+  }
+
+  try {
+    const parsedOrigin = new URL(origin);
+    return parsedOrigin.protocol === "https:" && parsedOrigin.hostname.endsWith(".vercel.app");
+  } catch (error) {
+    return false;
+  }
+}
+
 app.use(
   cors({
     origin: (origin, callback) => {
-      const matchesExplicitOrigin = env.clientUrls.includes(origin);
-      const matchesPattern = env.clientUrlPatterns.some((pattern) => pattern.test(origin || ""));
-
-      if (!origin || matchesExplicitOrigin || matchesPattern) {
+      if (isAllowedOrigin(origin)) {
         callback(null, true);
         return;
       }
