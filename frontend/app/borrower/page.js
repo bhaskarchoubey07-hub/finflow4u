@@ -5,7 +5,7 @@ import Header from "../../components/Header";
 import StatCard from "../../components/StatCard";
 import { apiRequest } from "../../lib/api";
 import { getToken, getUser } from "../../lib/auth";
-import { launchRazorpayCheckout } from "../../lib/payments";
+import { launchRazorpayCheckout, pollPaymentStatus } from "../../lib/payments";
 
 const initialForm = {
   amount: 10000,
@@ -22,6 +22,7 @@ export default function BorrowerDashboard() {
   const [message, setMessage] = useState("");
   const [user, setUser] = useState(null);
   const [walletData, setWalletData] = useState(null);
+  const [paymentState, setPaymentState] = useState(null);
 
   async function loadLoans() {
     try {
@@ -98,9 +99,21 @@ export default function BorrowerDashboard() {
             }
           })
       });
-      setMessage("Repayment posted successfully.");
+      setPaymentState({ status: "verifying", paymentId: intent.payment.id });
+      const verified = await pollPaymentStatus({
+        paymentId: intent.payment.id,
+        token,
+        apiRequest
+      });
+      setPaymentState({ status: verified?.status || "pending", paymentId: intent.payment.id });
+      setMessage(
+        verified?.status === "SUCCEEDED"
+          ? "Repayment posted successfully."
+          : "Payment captured, waiting for final confirmation."
+      );
       loadLoans();
     } catch (error) {
+      setPaymentState({ status: "failed" });
       setMessage(error.message);
     }
   }
@@ -121,6 +134,11 @@ export default function BorrowerDashboard() {
         </div>
 
         {message ? <div className="info-banner">{message}</div> : null}
+        {paymentState ? (
+          <div className={paymentState.status === "failed" ? "error-banner" : "info-banner"}>
+            Payment status: {paymentState.status}
+          </div>
+        ) : null}
 
         <div className="stats-grid">
           <StatCard label="Total Loans" value={String(loans.length)} />

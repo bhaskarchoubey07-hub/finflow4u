@@ -72,6 +72,26 @@ async function createStripePaymentIntent({ amount, currency, metadata }) {
   };
 }
 
+async function retrieveStripePaymentIntent(paymentIntentId) {
+  const config = getProviderConfig(PaymentProvider.STRIPE);
+  const response = await fetch(`https://api.stripe.com/v1/payment_intents/${paymentIntentId}`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${config.secretKey}`
+    }
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    const error = new Error(data?.error?.message || "Stripe payment intent retrieval failed.");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  return data;
+}
+
 async function createRazorpayOrder({ amount, currency, receipt, notes }) {
   const config = getProviderConfig(PaymentProvider.RAZORPAY);
   const auth = Buffer.from(`${config.keyId}:${config.keySecret}`).toString("base64");
@@ -144,6 +164,7 @@ function verifyStripeWebhookSignature(rawBody, signature) {
 
 module.exports = {
   createStripePaymentIntent,
+  retrieveStripePaymentIntent,
   createRazorpayOrder,
   verifyRazorpaySignature,
   verifyStripeWebhookSignature

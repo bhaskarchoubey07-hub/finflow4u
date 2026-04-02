@@ -3,7 +3,9 @@ const {
   createPaymentIntent,
   verifyRazorpayPayment,
   recordStripeWebhook,
-  getUserPayments
+  getUserPayments,
+  getPaymentById,
+  confirmStripeClientPayment
 } = require("../services/paymentService");
 
 async function createIntent(req, res) {
@@ -43,9 +45,29 @@ async function wallet(req, res) {
   });
 }
 
+async function paymentStatus(req, res) {
+  const payment = await getPaymentById(req.user.id, req.validated.params.paymentId);
+  return res.json({ payment });
+}
+
+async function confirmStripe(req, res) {
+  const payment = await confirmStripeClientPayment(
+    req.user.id,
+    req.validated.body.paymentId,
+    req.validated.body.providerPaymentId
+  );
+
+  return res.json({
+    message: "Stripe payment confirmed successfully.",
+    payment
+  });
+}
+
 module.exports = {
   createIntent,
   verifyRazorpay,
   stripeWebhook,
-  wallet
+  wallet,
+  paymentStatus,
+  confirmStripe
 };

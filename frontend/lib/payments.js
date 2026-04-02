@@ -67,3 +67,17 @@ export async function loadStripeJs(publishableKey) {
 
   return window.Stripe(publishableKey);
 }
+
+export async function pollPaymentStatus({ paymentId, token, apiRequest, attempts = 8, intervalMs = 2000 }) {
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
+    const response = await apiRequest(`/payments/${paymentId}`, { token });
+
+    if (response.payment.status === "SUCCEEDED" || response.payment.status === "FAILED") {
+      return response.payment;
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, intervalMs));
+  }
+
+  return null;
+}

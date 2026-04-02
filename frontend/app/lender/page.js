@@ -4,9 +4,9 @@ import { useEffect, useState } from "react";
 import Header from "../../components/Header";
 import StatCard from "../../components/StatCard";
 import PortfolioChart from "../../components/PortfolioChart";
+import StripeTopUpPanel from "../../components/StripeTopUpPanel";
 import { apiRequest } from "../../lib/api";
 import { getToken, getUser } from "../../lib/auth";
-import { loadStripeJs } from "../../lib/payments";
 
 export default function LenderDashboard() {
   const [portfolio, setPortfolio] = useState(null);
@@ -68,45 +68,7 @@ export default function LenderDashboard() {
                     <span className="eyebrow">Wallet</span>
                     <h3>Lender cash position</h3>
                   </div>
-                  <button
-                    className="primary-button small"
-                    onClick={async () => {
-                      try {
-                        const token = getToken();
-                        const amount = window.prompt("Top-up amount");
-                        if (!amount) return;
-                        const response = await apiRequest("/payments/intent", {
-                          method: "POST",
-                          token,
-                          body: {
-                            provider: "STRIPE",
-                            purpose: "LENDER_TOP_UP",
-                            amount: Number(amount),
-                            currency: "USD"
-                          }
-                        });
-                        const stripeKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
-
-                        if (!stripeKey) {
-                          setMessage(
-                            `Stripe intent created. Add NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY to use client confirmation.`
-                          );
-                          return;
-                        }
-
-                        const stripe = await loadStripeJs(stripeKey);
-                        setMessage(
-                          stripe
-                            ? `Stripe intent ready. Use client secret ${response.payment.clientSecret} in the next checkout step.`
-                            : "Stripe SDK unavailable."
-                        );
-                      } catch (error) {
-                        setMessage(error.message);
-                      }
-                    }}
-                  >
-                    Top Up Wallet
-                  </button>
+                  <span className="inline-note">Use Stripe Elements for live top-ups</span>
                 </div>
                 <div className="timeline-list">
                   <div className="timeline-item">
@@ -124,6 +86,14 @@ export default function LenderDashboard() {
                     </div>
                   ))}
                 </div>
+                <StripeTopUpPanel
+                  onMessage={setMessage}
+                  onSuccess={async () => {
+                    const token = getToken();
+                    const data = await apiRequest("/portfolio", { token });
+                    setPortfolio(data);
+                  }}
+                />
               </div>
             ) : null}
 

@@ -3,7 +3,14 @@ const { z } = require("zod");
 const asyncHandler = require("../utils/asyncHandler");
 const validate = require("../middleware/validate");
 const { authenticate, authorize } = require("../middleware/auth");
-const { createIntent, verifyRazorpay, stripeWebhook, wallet } = require("../controllers/paymentController");
+const {
+  createIntent,
+  verifyRazorpay,
+  stripeWebhook,
+  wallet,
+  paymentStatus,
+  confirmStripe
+} = require("../controllers/paymentController");
 
 const router = express.Router();
 
@@ -26,7 +33,26 @@ const verifyRazorpaySchema = z.object({
   })
 });
 
+const paymentStatusSchema = z.object({
+  params: z.object({
+    paymentId: z.string().min(5)
+  })
+});
+
+const confirmStripeSchema = z.object({
+  body: z.object({
+    paymentId: z.string().min(5),
+    providerPaymentId: z.string().min(5)
+  })
+});
+
 router.post("/stripe/webhook", asyncHandler(stripeWebhook));
+router.post(
+  "/stripe/confirm",
+  authenticate,
+  validate(confirmStripeSchema),
+  asyncHandler(confirmStripe)
+);
 router.post(
   "/razorpay/verify",
   authenticate,
@@ -35,6 +61,13 @@ router.post(
 );
 
 router.get("/wallet", authenticate, authorize("BORROWER", "LENDER"), asyncHandler(wallet));
+router.get(
+  "/:paymentId",
+  authenticate,
+  authorize("BORROWER", "LENDER"),
+  validate(paymentStatusSchema),
+  asyncHandler(paymentStatus)
+);
 router.post(
   "/intent",
   authenticate,

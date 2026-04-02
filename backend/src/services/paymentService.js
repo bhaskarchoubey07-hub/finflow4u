@@ -10,6 +10,7 @@ const {
 const prisma = require("../config/prisma");
 const {
   createStripePaymentIntent,
+  retrieveStripePaymentIntent,
   createRazorpayOrder,
   verifyRazorpaySignature,
   verifyStripeWebhookSignature
@@ -293,9 +294,78 @@ async function getUserPayments(userId) {
   }));
 }
 
+async function getPaymentById(userId, paymentId) {
+  const payment = await prisma.payment.findFirst({
+    where: {
+      id: paymentId,
+      userId
+    },
+    include: {
+      loan: {
+        select: {
+          id: true,
+          purpose: true,
+          riskGrade: true
+        }
+      }
+    }
+  });
+
+  if (!payment) {
+    const error = new Error("Payment not found.");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  return {
+    id: payment.id,
+    provider: payment.provider,
+    purpose: payment.purpose,
+    status: payment.status,
+    amount: Number(payment.amount),
+    currency: payment.currency,
+    providerPaymentId: payment.providerPaymentId,
+    providerOrderId: payment.providerOrderId,
+    clientSecret: payment.clientSecret,
+    createdAt: payment.createdAt,
+    loan: payment.loan
+  };
+}
+
+async function confirmStripeClientPayment(userId, paymentId, providerPaymentId) {
+  const payment = await prisma.payment.findFirst({
+    where: {
+      id: paymentId,
+      userId,
+      provider: PaymentProvider.STRIPE
+    }
+  });
+
+  if (!payment) {
+    const error = new Error("Stripe payment record not found.");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  const paymentIntent = await retrieveStripePaymentIntent(providerPaymentId);
+
+  if (paymentIntent.status !== "succeeded") {
+    const error = new Error(`Stripe payment is currently ${paymentIntent.status}.`);
+    error.statusCode = 400;
+    throw error;
+  }
+
+  return fulfillSuccessfulPayment(payment.id, {
+    providerPaymentId: paymentIntent.id,
+    metadata: paymentIntent
+  });
+}
+
 module.exports = {
   createPaymentIntent,
   verifyRazorpayPayment,
   recordStripeWebhook,
-  getUserPayments
+  getUserPayments,
+  getPaymentById,
+  confirmStripeClientPayment
 };
