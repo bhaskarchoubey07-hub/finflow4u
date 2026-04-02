@@ -60,6 +60,60 @@ export default function LenderDashboard() {
               />
             </div>
 
+            {portfolio.wallet ? (
+              <div className="panel">
+                <div className="section-heading">
+                  <div>
+                    <span className="eyebrow">Wallet</span>
+                    <h3>Lender cash position</h3>
+                  </div>
+                  <button
+                    className="primary-button small"
+                    onClick={async () => {
+                      try {
+                        const token = getToken();
+                        const amount = window.prompt("Top-up amount");
+                        if (!amount) return;
+                        const response = await apiRequest("/payments/intent", {
+                          method: "POST",
+                          token,
+                          body: {
+                            provider: "STRIPE",
+                            purpose: "LENDER_TOP_UP",
+                            amount: Number(amount),
+                            currency: "USD"
+                          }
+                        });
+                        setMessage(
+                          `Payment intent created. Client secret: ${response.payment.clientSecret || "Use webhook flow"}`
+                        );
+                      } catch (error) {
+                        setMessage(error.message);
+                      }
+                    }}
+                  >
+                    Top Up Wallet
+                  </button>
+                </div>
+                <div className="timeline-list">
+                  <div className="timeline-item">
+                    <div className="stack">
+                      <strong>Total wallet balance</strong>
+                      <span>${Number(portfolio.wallet.balance).toLocaleString()}</span>
+                    </div>
+                  </div>
+                  {portfolio.wallet.accounts.map((account) => (
+                    <div className="timeline-item" key={account.type}>
+                      <div className="stack">
+                        <strong>{account.type}</strong>
+                        <span>${Number(account.balance).toLocaleString()}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+
             <div className="grid-two">
               <PortfolioChart investments={portfolio.investments} />
 

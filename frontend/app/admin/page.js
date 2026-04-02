@@ -9,19 +9,22 @@ import { getToken, getUser } from "../../lib/auth";
 export default function AdminDashboard() {
   const [analytics, setAnalytics] = useState(null);
   const [loans, setLoans] = useState([]);
+  const [ledger, setLedger] = useState(null);
   const [message, setMessage] = useState("");
   const [user, setUser] = useState(null);
 
   async function loadAdminData() {
     try {
       const token = getToken();
-      const [pendingData, analyticsData] = await Promise.all([
+      const [pendingData, analyticsData, ledgerData] = await Promise.all([
         apiRequest("/admin/loans/pending", { token }),
-        apiRequest("/admin/analytics", { token })
+        apiRequest("/admin/analytics", { token }),
+        apiRequest("/admin/ledger", { token })
       ]);
 
       setLoans(pendingData.loans);
       setAnalytics(analyticsData.analytics);
+      setLedger(ledgerData);
     } catch (error) {
       setMessage(error.message);
     }
@@ -54,6 +57,33 @@ export default function AdminDashboard() {
         }
       });
       setMessage(`Loan marked as ${reviewStatus.toLowerCase().replaceAll("_", " ")}.`);
+      loadAdminData();
+    } catch (error) {
+      setMessage(error.message);
+    }
+  }
+
+  async function handleAdjustment(targetUserId, role) {
+    const amount = window.prompt("Adjustment amount");
+    const reason = window.prompt("Adjustment reason");
+
+    if (!amount || !reason) {
+      return;
+    }
+
+    try {
+      const token = getToken();
+      await apiRequest("/admin/manual-adjustment", {
+        method: "POST",
+        token,
+        body: {
+          userId: targetUserId,
+          role,
+          amount: Number(amount),
+          reason
+        }
+      });
+      setMessage("Manual adjustment posted.");
       loadAdminData();
     } catch (error) {
       setMessage(error.message);
@@ -94,6 +124,21 @@ export default function AdminDashboard() {
           </div>
         ) : null}
 
+        {analytics ? (
+          <div className="stats-grid">
+            <StatCard label="Overdue EMIs" value={String(analytics.overdueRepayments)} tone="warning" />
+            <StatCard
+              label="Notifications"
+              value={String(analytics.notificationsSent)}
+              tone="accent"
+            />
+            <StatCard
+              label="Platform Wallet"
+              value={`$${Number(analytics.platformWalletBalance).toLocaleString()}`}
+            />
+          </div>
+        ) : null}
+
         <div className="panel">
           <h3>Pending applications</h3>
           <div className="timeline-list">
@@ -125,6 +170,73 @@ export default function AdminDashboard() {
             {!loans.length ? <div className="empty-card">No pending applications right now.</div> : null}
           </div>
         </div>
+
+        {ledger ? (
+          <div className="grid-two admin-grid">
+            <div className="panel">
+              <h3>Wallets and balances</h3>
+              <div className="timeline-list">
+                {ledger.wallets.map((wallet) => (
+                  <div className="timeline-item review-item" key={wallet.id}>
+                    <div className="stack">
+                      <strong>
+                        {wallet.user?.name || "Platform"} | {wallet.type}
+                      </strong>
+                      <span>Balance ${Number(wallet.balance).toLocaleString()}</span>
+                      <span>
+                        {wallet.accounts.map((account) => `${account.type}: $${account.balance.toFixed(2)}`).join(" | ")}
+                      </span>
+                    </div>
+                    {wallet.user ? (
+                      <button
+                        className="ghost-button"
+                        onClick={() => handleAdjustment(wallet.user.id, wallet.user.role)}
+                      >
+                        Adjust
+                      </button>
+                    ) : null}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="panel">
+              <h3>Flagged and delinquent exposure</h3>
+              <div className="timeline-list">
+                {ledger.flaggedLoans.map((loan) => (
+                  <div className="timeline-item review-item" key={loan.id}>
+                    <div className="stack">
+                      <strong>{loan.borrower.name}</strong>
+                      <span>
+                        ${loan.amount.toLocaleString()} | {loan.status} | {loan.riskBand}
+                      </span>
+                      <span>PD {loan.probabilityOfDefault.toFixed(2)}%</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        ) : null}
+
+        {ledger ? (
+          <div className="panel">
+            <h3>Recent transfers</h3>
+            <div className="timeline-list">
+              {ledger.recentTransfers.map((transfer) => (
+                <div className="timeline-item review-item" key={transfer.id}>
+                  <div className="stack">
+                    <strong>{transfer.description}</strong>
+                    <span>
+                      ${transfer.amount.toLocaleString()} | {transfer.referenceType}
+                    </span>
+                    <span>{new Date(transfer.createdAt).toLocaleString()}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : null}
       </section>
     </main>
   );

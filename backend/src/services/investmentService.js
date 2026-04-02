@@ -1,6 +1,7 @@
-const { LoanStatus } = require("@prisma/client");
+const { LoanStatus, WalletType, LedgerAccountType, LedgerEntryDirection } = require("@prisma/client");
 const prisma = require("../config/prisma");
 const { logTransaction } = require("../utils/logger");
+const { ensureWalletWithAccounts, getWalletSnapshot, postTransfer } = require("./ledgerService");
 
 async function investInLoan(lenderId, { loanId, amountInvested }) {
   const amount = Number(amountInvested);
@@ -41,6 +42,53 @@ async function investInLoan(lenderId, { loanId, amountInvested }) {
         loanId,
         amountInvested: amount
       }
+    });
+
+    const platformWallet = await ensureWalletWithAccounts(tx, {
+      walletType: WalletType.PLATFORM
+    });
+    const lenderWallet = await ensureWalletWithAccounts(tx, {
+      walletType: WalletType.LENDER,
+      userId: lenderId
+    });
+
+    const lenderCash = lenderWallet.accounts.find((account) => account.type === LedgerAccountType.CASH);
+    const lenderFundingHold = lenderWallet.accounts.find(
+      (account) => account.type === LedgerAccountType.FUNDING_HOLD
+    );
+    const platformFundingHold = platformWallet.accounts.find(
+      (account) => account.type === LedgerAccountType.FUNDING_HOLD
+    );
+
+    await postTransfer(tx, {
+      description: "Lender investment committed to loan funding pool",
+      amount,
+      referenceType: "INVESTMENT",
+      loanId,
+      investmentId: investment.id,
+      entries: [
+        {
+          walletId: lenderWallet.id,
+          ledgerAccountId: lenderCash.id,
+          amount,
+          direction: LedgerEntryDirection.CREDIT,
+          memo: "Lender cash reduced by investment commitment"
+        },
+        {
+          walletId: lenderWallet.id,
+          ledgerAccountId: lenderFundingHold.id,
+          amount,
+          direction: LedgerEntryDirection.DEBIT,
+          memo: "Lender funds moved to committed capital"
+        },
+        {
+          walletId: platformWallet.id,
+          ledgerAccountId: platformFundingHold.id,
+          amount,
+          direction: LedgerEntryDirection.DEBIT,
+          memo: "Platform funding pool increased by lender commitment"
+        }
+      ]
     });
 
     if (amount === remaining) {
@@ -99,8 +147,22 @@ async function getLenderPortfolio(lenderId) {
     }
   );
 
+  const wallet = await getWalletSnapshot(prisma, {
+    walletType: WalletType.LENDER,
+    userId: lenderId
+  });
+
   return {
     summary,
+    wallet: wallet
+      ? {
+          balance: Number(wallet.balance),
+          accounts: wallet.accounts.map((account) => ({
+            type: account.type,
+            balance: Number(account.balance)
+          }))
+        }
+      : null,
     investments: investments.map((investment) => ({
       id: investment.id,
       amountInvested: Number(investment.amountInvested),

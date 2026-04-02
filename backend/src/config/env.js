@@ -21,6 +21,11 @@ module.exports = {
   jwtSecret: process.env.JWT_SECRET,
   emailFrom: process.env.EMAIL_FROM || "alerts@lendgrid.local",
   smsFrom: process.env.SMS_FROM || "LENDGRID",
+  stripeSecretKey: process.env.STRIPE_SECRET_KEY,
+  stripePublishableKey: process.env.STRIPE_PUBLISHABLE_KEY,
+  stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET,
+  razorpayKeyId: process.env.RAZORPAY_KEY_ID,
+  razorpayKeySecret: process.env.RAZORPAY_KEY_SECRET,
   clientUrls: clientOrigins.filter((origin) => !origin.includes("*")),
   clientUrlPatterns: clientOrigins
     .filter((origin) => origin.includes("*"))

@@ -1,9 +1,18 @@
-const { LoanStatus, RepaymentStatus, ReviewStatus, NotificationChannel } = require("@prisma/client");
+const {
+  LoanStatus,
+  RepaymentStatus,
+  ReviewStatus,
+  NotificationChannel,
+  WalletType,
+  LedgerAccountType,
+  LedgerEntryDirection
+} = require("@prisma/client");
 const prisma = require("../config/prisma");
 const { calculateEmi } = require("../utils/emi");
 const { evaluateBorrower } = require("./creditScoreService");
 const { logTransaction } = require("../utils/logger");
 const { notifyUser } = require("./notificationService");
+const { ensureWalletWithAccounts, postTransfer } = require("./ledgerService");
 
 async function createLoanApplication(userId, payload) {
   const evaluation = await evaluateBorrower({
@@ -198,6 +207,10 @@ async function reviewLoanApplication(loanId, reviewerId, payload) {
     }
 
     const nextStatus = approved ? LoanStatus.ACTIVE : LoanStatus.REJECTED;
+    const reviewer = await tx.user.findUnique({
+      where: { id: reviewerId },
+      select: { id: true, name: true, email: true }
+    });
 
     const updated = await tx.loanRequest.update({
       where: { id: loanId },
@@ -210,13 +223,54 @@ async function reviewLoanApplication(loanId, reviewerId, payload) {
       },
       include: {
         borrower: true,
-        reviewer: {
-          select: { name: true, email: true }
-        }
+        reviewer: true
       }
     });
 
-    return updated;
+    if (approved) {
+      const platformWallet = await ensureWalletWithAccounts(tx, {
+        walletType: WalletType.PLATFORM
+      });
+      const borrowerWallet = await ensureWalletWithAccounts(tx, {
+        walletType: WalletType.BORROWER,
+        userId: loan.borrowerId
+      });
+
+      const platformFundingAccount = platformWallet.accounts.find(
+        (account) => account.type === LedgerAccountType.FUNDING_HOLD
+      );
+      const borrowerPayableAccount = borrowerWallet.accounts.find(
+        (account) => account.type === LedgerAccountType.BORROWER_PAYABLE
+      );
+
+      await postTransfer(tx, {
+        description: "Loan approved and borrower payable recorded",
+        amount: loan.amount,
+        referenceType: "LOAN_APPROVAL",
+        loanId: loan.id,
+        entries: [
+          {
+            walletId: platformWallet.id,
+            ledgerAccountId: platformFundingAccount.id,
+            amount: loan.amount,
+            direction: LedgerEntryDirection.DEBIT,
+            memo: "Platform funding pool reserved for borrower disbursal"
+          },
+          {
+            walletId: borrowerWallet.id,
+            ledgerAccountId: borrowerPayableAccount.id,
+            amount: loan.amount,
+            direction: LedgerEntryDirection.CREDIT,
+            memo: "Borrower payable created on approval"
+          }
+        ]
+      });
+    }
+
+    return {
+      ...updated,
+      reviewer
+    };
   });
 
   await notifyUser(updatedLoan.borrowerId, {
@@ -232,7 +286,7 @@ async function reviewLoanApplication(loanId, reviewerId, payload) {
 }
 
 async function getAdminAnalytics() {
-  const [pendingApplications, approvedApplications, rejectedApplications, defaultedLoans, fundedLoans] =
+  const [pendingApplications, approvedApplications, rejectedApplications, defaultedLoans, fundedLoans, notifications] =
     await Promise.all([
       prisma.loanRequest.count({ where: { reviewStatus: ReviewStatus.PENDING } }),
       prisma.loanRequest.count({ where: { reviewStatus: ReviewStatus.APPROVED } }),
@@ -241,15 +295,34 @@ async function getAdminAnalytics() {
       prisma.loanRequest.findMany({
         where: { reviewStatus: ReviewStatus.APPROVED },
         select: { amount: true }
-      })
+      }),
+      prisma.notification.count()
     ]);
+
+  const [overdueRepayments, platformWallet] = await Promise.all([
+    prisma.repayment.count({
+      where: {
+        status: RepaymentStatus.OVERDUE
+      })
+    }),
+    prisma.wallet.findFirst({
+      where: {
+        type: WalletType.PLATFORM,
+        userId: null
+      },
+      include: { accounts: true }
+    })
+  ]);
 
   return {
     pendingApplications,
     approvedApplications,
     rejectedApplications,
     defaultedLoans,
-    totalReviewedCapital: fundedLoans.reduce((sum, loan) => sum + Number(loan.amount), 0)
+    overdueRepayments,
+    notificationsSent: notifications,
+    totalReviewedCapital: fundedLoans.reduce((sum, loan) => sum + Number(loan.amount), 0),
+    platformWalletBalance: Number(platformWallet?.balance || 0)
   };
 }
 

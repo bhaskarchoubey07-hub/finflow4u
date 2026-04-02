@@ -48,6 +48,54 @@ enum NotificationStatus {
   FAILED
 }
 
+enum WalletType {
+  PLATFORM
+  BORROWER
+  LENDER
+}
+
+enum LedgerAccountType {
+  CASH
+  FUNDING_HOLD
+  LOAN_RECEIVABLE
+  INTEREST_REVENUE
+  FEE_REVENUE
+  BORROWER_PAYABLE
+  LENDER_PAYABLE
+  RESERVE
+}
+
+enum LedgerEntryDirection {
+  DEBIT
+  CREDIT
+}
+
+enum TransferStatus {
+  PENDING
+  POSTED
+  FAILED
+}
+
+enum PaymentProvider {
+  STRIPE
+  RAZORPAY
+}
+
+enum PaymentPurpose {
+  LENDER_TOP_UP
+  BORROWER_REPAYMENT
+  BORROWER_DISBURSAL
+  LENDER_PAYOUT
+}
+
+enum PaymentStatus {
+  PENDING
+  REQUIRES_ACTION
+  SUCCEEDED
+  FAILED
+  CANCELLED
+}
+
 model User {
   id           String        @id @default(cuid())
   name         String
@@ -61,6 +109,8 @@ model User {
   investments  Investment[]
   reviews      LoanRequest[] @relation("LoanReviewer")
   notifications Notification[]
+  wallets      Wallet[]
+  payments     Payment[]
 
   @@map("users")
 }
@@ -92,6 +142,7 @@ model LoanRequest {
   reviewer         User?       @relation("LoanReviewer", fields: [reviewedBy], references: [id])
   investments      Investment[]
   repayments       Repayment[]
+  payments         Payment[]
 
   @@map("loan_requests")
 }
@@ -136,4 +187,100 @@ model Notification {
   user      User               @relation(fields: [userId], references: [id])
 
   @@map("notifications")
+}
+
+model Wallet {
+  id        String            @id @default(cuid())
+  userId    String?           @map("user_id")
+  type      WalletType
+  currency  String            @default("USD")
+  balance   Decimal           @db.Decimal(14, 2) @default(0)
+  createdAt DateTime          @default(now()) @map("created_at")
+  updatedAt DateTime          @updatedAt @map("updated_at")
+  user      User?             @relation(fields: [userId], references: [id])
+  accounts  LedgerAccount[]
+
+  @@unique([userId, type])
+  @@map("wallets")
+}
+
+model LedgerAccount {
+  id        String            @id @default(cuid())
+  walletId   String           @map("wallet_id")
+  type      LedgerAccountType
+  balance   Decimal           @db.Decimal(14, 2) @default(0)
+  createdAt DateTime          @default(now()) @map("created_at")
+  updatedAt DateTime          @updatedAt @map("updated_at")
+  wallet    Wallet            @relation(fields: [walletId], references: [id])
+  entries   LedgerEntry[]
+
+  @@unique([walletId, type])
+  @@map("ledger_accounts")
+}
+
+model Transfer {
+  id             String         @id @default(cuid())
+  loanId         String?        @map("loan_id")
+  investmentId   String?        @map("investment_id")
+  repaymentId    String?        @map("repayment_id")
+  referenceType  String         @map("reference_type")
+  description    String
+  amount         Decimal        @db.Decimal(14, 2)
+  currency       String         @default("USD")
+  status         TransferStatus @default(POSTED)
+  createdAt      DateTime       @default(now()) @map("created_at")
+  updatedAt      DateTime       @updatedAt @map("updated_at")
+  entries        LedgerEntry[]
+  payment        Payment?
+
+  @@map("transfers")
+}
+
+model LedgerEntry {
+  id              String               @id @default(cuid())
+  transferId      String               @map("transfer_id")
+  ledgerAccountId String               @map("ledger_account_id")
+  amount          Decimal              @db.Decimal(14, 2)
+  direction       LedgerEntryDirection
+  memo            String?
+  createdAt       DateTime             @default(now()) @map("created_at")
+  transfer        Transfer             @relation(fields: [transferId], references: [id])
+  ledgerAccount   LedgerAccount        @relation(fields: [ledgerAccountId], references: [id])
+
+  @@map("ledger_entries")
+}
+
+model Payment {
+  id                String          @id @default(cuid())
+  userId            String          @map("user_id")
+  loanId            String?         @map("loan_id")
+  transferId        String?         @unique @map("transfer_id")
+  provider          PaymentProvider
+  purpose           PaymentPurpose
+  status            PaymentStatus   @default(PENDING)
+  currency          String          @default("USD")
+  amount            Decimal         @db.Decimal(14, 2)
+  providerPaymentId String?         @map("provider_payment_id")
+  providerOrderId   String?         @map("provider_order_id")
+  clientSecret      String?         @map("client_secret")
+  metadata          Json?
+  createdAt         DateTime        @default(now()) @map("created_at")
+  updatedAt         DateTime        @updatedAt @map("updated_at")
+  user              User            @relation(fields: [userId], references: [id])
+  loan              LoanRequest?    @relation(fields: [loanId], references: [id])
+  transfer          Transfer?       @relation(fields: [transferId], references: [id])
+
+  @@map("payments")
+}
+
+model WebhookEvent {
+  id          String          @id @default(cuid())
+  provider    PaymentProvider
+  eventType   String          @map("event_type")
+  providerId  String?         @map("provider_id")
+  payload     Json
+  processedAt DateTime?       @map("processed_at")
+  createdAt   DateTime        @default(now()) @map("created_at")
+
+  @@map("webhook_events")
 }

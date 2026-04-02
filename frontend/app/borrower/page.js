@@ -20,12 +20,17 @@ export default function BorrowerDashboard() {
   const [loans, setLoans] = useState([]);
   const [message, setMessage] = useState("");
   const [user, setUser] = useState(null);
+  const [walletData, setWalletData] = useState(null);
 
   async function loadLoans() {
     try {
       const token = getToken();
-      const data = await apiRequest("/loan/my-loans", { token });
+      const [data, wallet] = await Promise.all([
+        apiRequest("/loan/my-loans", { token }),
+        apiRequest("/payments/wallet", { token })
+      ]);
       setLoans(data.loans);
+      setWalletData(wallet);
     } catch (error) {
       setMessage(error.message);
     }
@@ -60,12 +65,20 @@ export default function BorrowerDashboard() {
   async function handleRepayment(loanId, amountPaid) {
     try {
       const token = getToken();
-      await apiRequest("/repayment/pay", {
+      const intent = await apiRequest("/payments/intent", {
         method: "POST",
         token,
-        body: { loanId, amountPaid }
+        body: {
+          provider: "RAZORPAY",
+          purpose: "BORROWER_REPAYMENT",
+          amount: Number(amountPaid),
+          currency: "INR",
+          loanId
+        }
       });
-      setMessage("Repayment posted successfully.");
+      setMessage(
+        `Repayment intent created. Complete the Razorpay checkout using order ${intent.payment.providerOrderId}.`
+      );
       loadLoans();
     } catch (error) {
       setMessage(error.message);
@@ -94,6 +107,28 @@ export default function BorrowerDashboard() {
           <StatCard label="Active Loans" value={String(activeLoans)} tone="success" />
           <StatCard label="Defaults" value={String(defaults)} tone="warning" />
         </div>
+
+        {walletData?.wallet ? (
+          <div className="panel">
+            <h3>Borrower wallet snapshot</h3>
+            <div className="timeline-list">
+              <div className="timeline-item">
+                <div className="stack">
+                  <strong>Wallet balance</strong>
+                  <span>${Number(walletData.wallet.balance || 0).toLocaleString()}</span>
+                </div>
+              </div>
+              {walletData.wallet.accounts.map((account) => (
+                <div className="timeline-item" key={account.type}>
+                  <div className="stack">
+                    <strong>{account.type}</strong>
+                    <span>${Number(account.balance).toLocaleString()}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : null}
 
         <div className="grid-two">
           <form className="panel form-panel" onSubmit={handleApply}>

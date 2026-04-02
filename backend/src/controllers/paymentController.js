@@ -1,0 +1,45 @@
+const { getUserWalletSummary } = require("../services/walletService");
+const {
+  createPaymentIntent,
+  verifyRazorpayPayment,
+  recordStripeWebhook,
+  getUserPayments
+} = require("../services/paymentService");
+
+async function createIntent(req, res) {
+  const payment = await createPaymentIntent(req.user.id, req.validated.body);
+  return res.status(201).json({
+    message: "Payment intent created successfully.",
+    payment
+  });
+}
+
+async function verifyRazorpay(req, res) {
+  const payment = await verifyRazorpayPayment(req.validated.body);
+  return res.json({
+    message: "Razorpay payment verified successfully.",
+    payment
+  });
+}
+
+async function stripeWebhook(req, res) {
+  const result = await recordStripeWebhook(req.body.toString("utf8"), req.headers["stripe-signature"]);
+  return res.json(result);
+}
+
+async function wallet(req, res) {
+  const summary = await getUserWalletSummary(req.user.id, req.user.role);
+  const payments = await getUserPayments(req.user.id);
+
+  return res.json({
+    wallet: summary,
+    payments
+  });
+}
+
+module.exports = {
+  createIntent,
+  verifyRazorpay,
+  stripeWebhook,
+  wallet
+};

@@ -1,6 +1,13 @@
-const { LoanStatus, RepaymentStatus } = require("@prisma/client");
+const {
+  LoanStatus,
+  RepaymentStatus,
+  WalletType,
+  LedgerAccountType,
+  LedgerEntryDirection
+} = require("@prisma/client");
 const prisma = require("../config/prisma");
 const { logTransaction } = require("../utils/logger");
+const { ensureWalletWithAccounts, postTransfer } = require("./ledgerService");
 
 async function processRepayment({ borrowerId, loanId, amountPaid }) {
   const amount = Number(amountPaid);
@@ -56,6 +63,56 @@ async function processRepayment({ borrowerId, loanId, amountPaid }) {
         paidAt: new Date(),
         status: RepaymentStatus.PAID
       }
+    });
+
+    const platformWallet = await ensureWalletWithAccounts(tx, {
+      walletType: WalletType.PLATFORM
+    });
+    const borrowerWallet = await ensureWalletWithAccounts(tx, {
+      walletType: WalletType.BORROWER,
+      userId: borrowerId
+    });
+
+    const borrowerPayable = borrowerWallet.accounts.find(
+      (account) => account.type === LedgerAccountType.BORROWER_PAYABLE
+    );
+    const platformCash = platformWallet.accounts.find((account) => account.type === LedgerAccountType.CASH);
+    const platformInterestRevenue = platformWallet.accounts.find(
+      (account) => account.type === LedgerAccountType.INTEREST_REVENUE
+    );
+
+    const interestPortion = Number((amount * 0.18).toFixed(2));
+    const principalPortion = Number((amount - interestPortion).toFixed(2));
+
+    await postTransfer(tx, {
+      description: "Borrower repayment collected and recognized",
+      amount,
+      referenceType: "REPAYMENT",
+      loanId,
+      repaymentId: dueRepayment.id,
+      entries: [
+        {
+          walletId: borrowerWallet.id,
+          ledgerAccountId: borrowerPayable.id,
+          amount: principalPortion,
+          direction: LedgerEntryDirection.DEBIT,
+          memo: "Borrower payable reduced by principal repayment"
+        },
+        {
+          walletId: platformWallet.id,
+          ledgerAccountId: platformCash.id,
+          amount: principalPortion,
+          direction: LedgerEntryDirection.DEBIT,
+          memo: "Platform cash increased by principal collected"
+        },
+        {
+          walletId: platformWallet.id,
+          ledgerAccountId: platformInterestRevenue.id,
+          amount: interestPortion,
+          direction: LedgerEntryDirection.DEBIT,
+          memo: "Interest revenue recognized"
+        }
+      ]
     });
 
     const now = new Date();

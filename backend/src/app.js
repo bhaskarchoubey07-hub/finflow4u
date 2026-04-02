@@ -9,6 +9,7 @@ const authRoutes = require("./routes/authRoutes");
 const loanRoutes = require("./routes/loanRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const investmentRoutes = require("./routes/investmentRoutes");
+const paymentRoutes = require("./routes/paymentRoutes");
 const repaymentRoutes = require("./routes/repaymentRoutes");
 const portfolioRoutes = require("./routes/portfolioRoutes");
 const errorHandler = require("./middleware/errorHandler");
@@ -36,6 +37,7 @@ function isAllowedOrigin(origin) {
   }
 }
 
+app.use("/payments/stripe/webhook", express.raw({ type: "application/json" }));
 app.use(
   cors({
     origin: (origin, callback) => {
@@ -62,6 +64,7 @@ app.use("/auth", authRoutes);
 app.use("/loan", loanRoutes);
 app.use("/admin", adminRoutes);
 app.use("/invest", investmentRoutes);
+app.use("/payments", paymentRoutes);
 app.use("/repayment", repaymentRoutes);
 app.use("/portfolio", portfolioRoutes);
 

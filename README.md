@@ -233,6 +233,7 @@ Vercel frontend:
 
 - `NEXT_PUBLIC_API_URL` must point to the public Render backend URL
 - `INTERNAL_API_URL` must point to the public Render backend URL
+- Add payment gateway keys only if you enable live Stripe/Razorpay flows on the backend
 
 ## Demo Users After Seed
 
@@ -248,3 +249,4 @@ Vercel frontend:
 - The repo now includes an initial Prisma SQL migration in `backend/prisma/migrations`.
 - The frontend proxies API requests through `frontend/app/api/[...path]/route.js`, which makes split deployments simpler because browser code can stay same-origin.
 - Notification hooks currently log and persist email/SMS/in-app events; provider credentials can be added later without changing the event flow.
+- Wallet and payment gateway foundations are now in place; Stripe and Razorpay intents/orders are created server-side and should be completed with provider keys and frontend checkout widgets.
