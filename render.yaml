@@ -6,11 +6,10 @@ services:
   - type: web
     name: p2p-lending-api
     runtime: node
-    plan: starter
+    plan: free
     healthCheckPath: /health
     rootDir: backend
     buildCommand: npm install && npx prisma generate
-    preDeployCommand: npm run prisma:deploy
     startCommand: npm start
     envVars:
       - key: DATABASE_URL
