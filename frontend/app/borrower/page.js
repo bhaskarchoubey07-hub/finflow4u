@@ -49,7 +49,7 @@ export default function BorrowerDashboard() {
       });
 
       setMessage(
-        `Application submitted. Score ${response.creditScore}, risk ${response.riskGrade}, EMI $${response.emiAmount}`
+        `Application submitted. Score ${response.creditScore}, ${response.riskBand} risk, PD ${response.probabilityOfDefault}% and EMI $${response.emiAmount}.`
       );
       loadLoans();
     } catch (error) {
@@ -163,7 +163,10 @@ export default function BorrowerDashboard() {
                         ${Number(loan.amount).toLocaleString()} | {loan.riskGrade}
                       </strong>
                       <span>
-                        {loan.status} | EMI ${Number(loan.emiAmount).toLocaleString()}
+                        {loan.status} | Review {loan.reviewStatus} | EMI ${Number(loan.emiAmount).toLocaleString()}
+                      </span>
+                      <span>
+                        {loan.riskBand || "Pending"} risk | PD {Number(loan.probabilityOfDefault || 0).toFixed(2)}%
                       </span>
                     </div>
                     {nextRepayment ? (

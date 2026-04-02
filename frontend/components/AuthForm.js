@@ -30,7 +30,13 @@ export default function AuthForm({ mode }) {
       });
 
       setSession(data.token, data.user);
-      router.push(data.user.role === "BORROWER" ? "/borrower" : "/lender");
+      router.push(
+        data.user.role === "BORROWER"
+          ? "/borrower"
+          : data.user.role === "ADMIN"
+            ? "/admin"
+            : "/lender"
+      );
     } catch (submitError) {
       setError(submitError.message);
     } finally {
@@ -75,6 +81,9 @@ export default function AuthForm({ mode }) {
           placeholder="Password123!"
           required
         />
+        {isRegister ? (
+          <span className="field-hint">Use at least 8 characters, one uppercase letter, and one number.</span>
+        ) : null}
       </label>
 
       {isRegister ? (

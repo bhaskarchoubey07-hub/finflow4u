@@ -5,13 +5,6 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { clearSession, getUser } from "../lib/auth";
 
-const links = [
-  { href: "/", label: "Home" },
-  { href: "/marketplace", label: "Marketplace" },
-  { href: "/borrower", label: "Borrower" },
-  { href: "/lender", label: "Lender" }
-];
-
 export default function Header() {
   const pathname = usePathname();
   const router = useRouter();
@@ -20,6 +13,14 @@ export default function Header() {
   useEffect(() => {
     setUser(getUser());
   }, [pathname]);
+
+  const links = [
+    { href: "/", label: "Home" },
+    { href: "/marketplace", label: "Marketplace" },
+    { href: "/borrower", label: "Borrower" },
+    { href: "/lender", label: "Lender" },
+    ...(user?.role === "ADMIN" ? [{ href: "/admin", label: "Admin" }] : [])
+  ];
 
   return (
     <header className="shell header">

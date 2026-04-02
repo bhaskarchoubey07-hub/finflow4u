@@ -29,6 +29,10 @@ export default function LoanTable({ loans, onInvest, showAction = false }) {
                 <span className={`pill risk-${String(loan.riskGrade).toLowerCase()}`}>
                   {loan.riskGrade}
                 </span>
+                <div className="stack compact">
+                  <span>{loan.riskBand || "Risk pending"}</span>
+                  <span>PD {Number(loan.probabilityOfDefault || 0).toFixed(2)}%</span>
+                </div>
               </td>
               <td>
                 <span className={`pill status-${String(loan.status).toLowerCase()}`}>

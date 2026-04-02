@@ -20,7 +20,13 @@ async function authenticate(req, res, next) {
         name: true,
         email: true,
         role: true,
-        creditScore: true
+        creditScore: true,
+        notifications: {
+          take: 5,
+          orderBy: {
+            createdAt: "desc"
+          }
+        }
       }
     });
 

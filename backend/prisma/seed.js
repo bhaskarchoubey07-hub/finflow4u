@@ -1,5 +1,13 @@
 const bcrypt = require("bcryptjs");
-const { PrismaClient, UserRole, LoanStatus, RepaymentStatus } = require("@prisma/client");
+const {
+  PrismaClient,
+  UserRole,
+  LoanStatus,
+  RepaymentStatus,
+  ReviewStatus,
+  NotificationChannel,
+  NotificationStatus
+} = require("@prisma/client");
 
 const prisma = new PrismaClient();
 
@@ -45,6 +53,16 @@ async function main() {
     }
   });
 
+  const admin = await prisma.user.create({
+    data: {
+      name: "Admin Reviewer",
+      email: "admin@example.com",
+      passwordHash,
+      role: UserRole.ADMIN,
+      creditScore: 810
+    }
+  });
+
   const interestRate = 11.5;
   const termMonths = 12;
   const amount = 15000;
@@ -62,7 +80,15 @@ async function main() {
       annualIncome: 32000,
       existingDebt: 3000,
       employmentStatus: "Self-employed",
-      emiAmount
+      emiAmount,
+      probabilityOfDefault: 8.4,
+      riskBand: "Medium",
+      decisionReason: "Stable income with manageable leverage, moderate self-employment risk.",
+      recommendedRate: interestRate,
+      reviewStatus: ReviewStatus.APPROVED,
+      reviewedBy: admin.id,
+      reviewedAt: new Date(),
+      reviewNotes: "Approved after reviewing borrower cash flow."
     }
   });
 
@@ -93,7 +119,31 @@ async function main() {
     ]
   });
 
+  await prisma.notification.createMany({
+    data: [
+      {
+        userId: borrower.id,
+        channel: NotificationChannel.EMAIL,
+        type: "loan-approved",
+        subject: "Your loan has been approved",
+        message: "Your inventory purchase loan was approved by the admin team.",
+        status: NotificationStatus.SENT,
+        sentAt: new Date()
+      },
+      {
+        userId: lender.id,
+        channel: NotificationChannel.IN_APP,
+        type: "investment-opportunity",
+        subject: "New medium-risk opportunity available",
+        message: "A reviewed loan is now live in the marketplace.",
+        status: NotificationStatus.SENT,
+        sentAt: new Date()
+      }
+    ]
+  });
+
   console.log("Seed completed.");
+  console.log("Admin user: admin@example.com / Password123!");
 }
 
 main()

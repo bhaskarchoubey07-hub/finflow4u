@@ -7,6 +7,7 @@ const env = require("./config/env");
 const swaggerDocument = require("./docs/swagger");
 const authRoutes = require("./routes/authRoutes");
 const loanRoutes = require("./routes/loanRoutes");
+const adminRoutes = require("./routes/adminRoutes");
 const investmentRoutes = require("./routes/investmentRoutes");
 const repaymentRoutes = require("./routes/repaymentRoutes");
 const portfolioRoutes = require("./routes/portfolioRoutes");
@@ -59,6 +60,7 @@ app.get("/health", (req, res) => {
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 app.use("/auth", authRoutes);
 app.use("/loan", loanRoutes);
+app.use("/admin", adminRoutes);
 app.use("/invest", investmentRoutes);
 app.use("/repayment", repaymentRoutes);
 app.use("/portfolio", portfolioRoutes);

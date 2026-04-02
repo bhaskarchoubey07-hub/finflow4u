@@ -1,7 +1,9 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const { NotificationChannel } = require("@prisma/client");
 const prisma = require("../config/prisma");
 const env = require("../config/env");
+const { notifyUser } = require("../services/notificationService");
 
 function signToken(user) {
   return jwt.sign({ userId: user.id, role: user.role }, env.jwtSecret, {
@@ -32,6 +34,13 @@ async function register(req, res) {
   });
 
   const token = signToken(user);
+
+  await notifyUser(user.id, {
+    channels: [NotificationChannel.EMAIL, NotificationChannel.IN_APP],
+    type: "welcome",
+    subject: "Welcome to LendGrid",
+    message: `Hi ${user.name}, your ${user.role.toLowerCase()} account is now active.`
+  });
 
   return res.status(201).json({
     token,

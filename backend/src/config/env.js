@@ -19,6 +19,8 @@ module.exports = {
   port: Number(process.env.PORT || 5000),
   databaseUrl: process.env.DATABASE_URL,
   jwtSecret: process.env.JWT_SECRET,
+  emailFrom: process.env.EMAIL_FROM || "alerts@lendgrid.local",
+  smsFrom: process.env.SMS_FROM || "LENDGRID",
   clientUrls: clientOrigins.filter((origin) => !origin.includes("*")),
   clientUrlPatterns: clientOrigins
     .filter((origin) => origin.includes("*"))

@@ -238,6 +238,7 @@ Vercel frontend:
 
 - Borrower: `borrower@example.com` / `Password123!`
 - Lender: `lender@example.com` / `Password123!`
+- Admin: `admin@example.com` / `Password123!`
 
 ## Notes
 
@@ -246,3 +247,4 @@ Vercel frontend:
 - Transaction logging is written to the backend console and HTTP logs are captured through Morgan.
 - The repo now includes an initial Prisma SQL migration in `backend/prisma/migrations`.
 - The frontend proxies API requests through `frontend/app/api/[...path]/route.js`, which makes split deployments simpler because browser code can stay same-origin.
+- Notification hooks currently log and persist email/SMS/in-app events; provider credentials can be added later without changing the event flow.

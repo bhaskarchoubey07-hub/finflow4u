@@ -74,6 +74,10 @@ export default function LenderDashboard() {
                           ${investment.amountInvested.toLocaleString()} at {investment.loan.interestRate}% |{" "}
                           {investment.loan.status}
                         </span>
+                        <span>
+                          {investment.loan.riskBand || "Pending"} risk | PD{" "}
+                          {Number(investment.loan.probabilityOfDefault || 0).toFixed(2)}%
+                        </span>
                       </div>
                       <span className={`pill risk-${investment.loan.riskGrade.toLowerCase()}`}>
                         {investment.loan.riskGrade}

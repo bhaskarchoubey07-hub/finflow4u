@@ -17,7 +17,7 @@ async function investInLoan(lenderId, { loanId, amountInvested }) {
       throw error;
     }
 
-    if (loan.status === LoanStatus.DEFAULTED || loan.status === LoanStatus.CLOSED) {
+    if (![LoanStatus.ACTIVE, LoanStatus.FUNDED].includes(loan.status)) {
       const error = new Error("This loan is no longer open for investment.");
       error.statusCode = 400;
       throw error;
@@ -110,6 +110,8 @@ async function getLenderPortfolio(lenderId) {
         amount: Number(investment.loan.amount),
         interestRate: Number(investment.loan.interestRate),
         riskGrade: investment.loan.riskGrade,
+        riskBand: investment.loan.riskBand,
+        probabilityOfDefault: Number(investment.loan.probabilityOfDefault || 0),
         status: investment.loan.status,
         emiAmount: Number(investment.loan.emiAmount),
         borrower: investment.loan.borrower
