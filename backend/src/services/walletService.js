@@ -95,6 +95,7 @@ async function getAdminLedgerOverview() {
 
 async function getUserWalletSummary(userId, role) {
   const walletType = role === "BORROWER" ? WalletType.BORROWER : WalletType.LENDER;
+  await ensureWalletWithAccounts(prisma, { walletType, userId });
   const wallet = await getWalletSnapshot(prisma, { walletType, userId });
 
   return wallet
