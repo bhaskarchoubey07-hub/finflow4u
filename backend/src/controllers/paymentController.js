@@ -10,7 +10,13 @@ async function createIntent(req, res) {
   const payment = await createPaymentIntent(req.user.id, req.validated.body);
   return res.status(201).json({
     message: "Payment intent created successfully.",
-    payment
+    payment,
+    providerConfig:
+      payment.provider === "RAZORPAY"
+        ? {
+            keyId: payment.metadata?.keyId || null
+          }
+        : null
   });
 }
 

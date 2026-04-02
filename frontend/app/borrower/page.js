@@ -5,6 +5,7 @@ import Header from "../../components/Header";
 import StatCard from "../../components/StatCard";
 import { apiRequest } from "../../lib/api";
 import { getToken, getUser } from "../../lib/auth";
+import { launchRazorpayCheckout } from "../../lib/payments";
 
 const initialForm = {
   amount: 10000,
@@ -76,9 +77,28 @@ export default function BorrowerDashboard() {
           loanId
         }
       });
-      setMessage(
-        `Repayment intent created. Complete the Razorpay checkout using order ${intent.payment.providerOrderId}.`
-      );
+      await launchRazorpayCheckout({
+        keyId: intent.providerConfig?.keyId,
+        orderId: intent.payment.providerOrderId,
+        amount: Number(amountPaid),
+        name: "LendGrid Repayments",
+        description: "Borrower EMI repayment",
+        prefill: {
+          name: user?.name || "Borrower",
+          email: user?.email || ""
+        },
+        onSuccess: async (gatewayResponse) =>
+          apiRequest("/payments/razorpay/verify", {
+            method: "POST",
+            token,
+            body: {
+              orderId: gatewayResponse.razorpay_order_id,
+              paymentId: gatewayResponse.razorpay_payment_id,
+              signature: gatewayResponse.razorpay_signature
+            }
+          })
+      });
+      setMessage("Repayment posted successfully.");
       loadLoans();
     } catch (error) {
       setMessage(error.message);

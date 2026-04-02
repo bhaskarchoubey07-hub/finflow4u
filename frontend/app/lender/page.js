@@ -6,6 +6,7 @@ import StatCard from "../../components/StatCard";
 import PortfolioChart from "../../components/PortfolioChart";
 import { apiRequest } from "../../lib/api";
 import { getToken, getUser } from "../../lib/auth";
+import { loadStripeJs } from "../../lib/payments";
 
 export default function LenderDashboard() {
   const [portfolio, setPortfolio] = useState(null);
@@ -84,8 +85,20 @@ export default function LenderDashboard() {
                             currency: "USD"
                           }
                         });
+                        const stripeKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
+
+                        if (!stripeKey) {
+                          setMessage(
+                            `Stripe intent created. Add NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY to use client confirmation.`
+                          );
+                          return;
+                        }
+
+                        const stripe = await loadStripeJs(stripeKey);
                         setMessage(
-                          `Payment intent created. Client secret: ${response.payment.clientSecret || "Use webhook flow"}`
+                          stripe
+                            ? `Stripe intent ready. Use client secret ${response.payment.clientSecret} in the next checkout step.`
+                            : "Stripe SDK unavailable."
                         );
                       } catch (error) {
                         setMessage(error.message);
@@ -138,6 +151,23 @@ export default function LenderDashboard() {
                       </span>
                     </div>
                   ))}
+                  {portfolio.payments?.length ? (
+                    <div className="panel nested-panel">
+                      <h3>Recent payments</h3>
+                      <div className="timeline-list">
+                        {portfolio.payments.map((payment) => (
+                          <div className="timeline-item" key={payment.id}>
+                            <div className="stack">
+                              <strong>{payment.purpose}</strong>
+                              <span>
+                                ${payment.amount.toLocaleString()} | {payment.provider} | {payment.status}
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
                 </div>
               </div>
             </div>
