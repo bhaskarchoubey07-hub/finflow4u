@@ -303,7 +303,7 @@ async function getAdminAnalytics() {
     prisma.repayment.count({
       where: {
         status: RepaymentStatus.OVERDUE
-      })
+      }
     }),
     prisma.wallet.findFirst({
       where: {
