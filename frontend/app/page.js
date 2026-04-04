@@ -2,6 +2,11 @@ import Link from "next/link";
 import Header from "../components/Header";
 import { API_URL } from "../lib/api";
 
+export const metadata = {
+  title: "Home | LendGrid Infrastructure",
+  description: "Marketplace Lending Infrastructure. Fund borrowers faster. Price risk smarter. Track returns clearly.",
+};
+
 const benefits = [
   "Risk-tiered underwriting with transparent pricing",
   "Marketplace discovery with expected return visibility",
