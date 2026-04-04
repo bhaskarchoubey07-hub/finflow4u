@@ -6,6 +6,7 @@ const {
   reviewLoanApplication,
   getAdminAnalytics
 } = require("../services/loanService");
+const { evaluateBorrower } = require("../services/creditScoreService");
 
 async function applyForLoan(req, res) {
   const result = await createLoanApplication(req.user.id, req.validated.body);
@@ -22,6 +23,29 @@ async function applyForLoan(req, res) {
     decisionReason: result.evaluation.decisionReason,
     emiAmount: result.emiAmount,
     loan: result.loan
+  });
+}
+
+async function analyzeEligibility(req, res) {
+  const payload = req.validated.body;
+  const evaluation = await evaluateBorrower({
+    annualIncome: Number(payload.annualIncome),
+    existingDebt: Number(payload.existingDebt),
+    employmentStatus: payload.employmentStatus,
+    loanAmount: Number(payload.amount),
+    termMonths: Number(payload.termMonths)
+  });
+
+  return res.json({
+    message: "Risk analysis complete.",
+    creditScore: evaluation.creditScore,
+    riskGrade: evaluation.riskGrade,
+    riskBand: evaluation.riskBand,
+    interestRate: evaluation.interestRate,
+    probabilityOfDefault: evaluation.probabilityOfDefault,
+    recommendation: evaluation.recommendation,
+    decisionReason: evaluation.decisionReason,
+    metrics: evaluation.metrics
   });
 }
 
@@ -59,5 +83,6 @@ module.exports = {
   myLoans,
   pendingReviews,
   reviewLoan,
-  adminAnalytics
+  adminAnalytics,
+  analyzeEligibility
 };

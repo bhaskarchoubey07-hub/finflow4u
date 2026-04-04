@@ -3,7 +3,7 @@ const { z } = require("zod");
 const asyncHandler = require("../utils/asyncHandler");
 const validate = require("../middleware/validate");
 const { authenticate, authorize } = require("../middleware/auth");
-const { applyForLoan, marketplace, myLoans } = require("../controllers/loanController");
+const { applyForLoan, marketplace, myLoans, analyzeEligibility } = require("../controllers/loanController");
 
 const router = express.Router();
 
@@ -32,6 +32,22 @@ router.post(
   authorize("BORROWER"),
   validate(loanApplicationSchema),
   asyncHandler(applyForLoan)
+);
+
+/**
+ * @swagger
+ * /loan/analyze:
+ *   post:
+ *     summary: Simulate risk analysis without applying
+ *     security:
+ *       - bearerAuth: []
+ */
+router.post(
+  "/analyze",
+  authenticate,
+  authorize("BORROWER"),
+  validate(loanApplicationSchema),
+  asyncHandler(analyzeEligibility)
 );
 
 /**

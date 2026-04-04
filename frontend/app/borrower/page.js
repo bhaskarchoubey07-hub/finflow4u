@@ -23,6 +23,25 @@ export default function BorrowerDashboard() {
   const [user, setUser] = useState(null);
   const [walletData, setWalletData] = useState(null);
   const [paymentState, setPaymentState] = useState(null);
+  const [analysis, setAnalysis] = useState(null);
+
+  async function handleAnalyze(event) {
+    if (event) event.preventDefault();
+    setMessage("");
+
+    try {
+      const token = getToken();
+      const response = await apiRequest("/loan/analyze", {
+        method: "POST",
+        token,
+        body: form
+      });
+      setAnalysis(response);
+      setMessage("Eligibility check completed.");
+    } catch (error) {
+      setMessage(error.message);
+    }
+  }
 
   async function loadLoans() {
     try {
@@ -219,44 +238,94 @@ export default function BorrowerDashboard() {
                 />
               </label>
             </div>
-            <button className="primary-button" type="submit">
-              Submit application
-            </button>
+            <div style={{ display: "flex", gap: "12px", marginTop: "24px" }}>
+              <button className="primary-button" type="submit">
+                Submit application
+              </button>
+              <button className="ghost-button" type="button" onClick={handleAnalyze}>
+                Analyze Eligibility
+              </button>
+            </div>
           </form>
 
-          <div className="panel">
-            <h3>Loan health</h3>
-            <div className="timeline-list">
-              {loans.map((loan) => {
-                const nextRepayment = loan.repayments.find((item) => item.status !== "PAID");
-                return (
-                  <div className="timeline-item" key={loan.id}>
-                    <div className="stack">
-                      <strong>
-                        ${Number(loan.amount).toLocaleString()} | {loan.riskGrade}
-                      </strong>
-                      <span>
-                        {loan.status} | Review {loan.reviewStatus} | EMI ${Number(loan.emiAmount).toLocaleString()}
-                      </span>
-                      <span>
-                        {loan.riskBand || "Pending"} risk | PD {Number(loan.probabilityOfDefault || 0).toFixed(2)}%
-                      </span>
-                    </div>
-                    {nextRepayment ? (
-                      <button
-                        className="ghost-button"
-                        onClick={() => handleRepayment(loan.id, nextRepayment.amountPaid)}
-                      >
-                        Pay next EMI
-                      </button>
-                    ) : (
-                      <span className="pill status-closed">Settled</span>
-                    )}
+          {analysis ? (
+            <div className="panel">
+              <div className="section-heading">
+                <div>
+                  <span className="eyebrow">Risk Analyzer Matrix</span>
+                  <h3>Eligibility Results</h3>
+                </div>
+              </div>
+              <div className="timeline-list">
+                <div className="timeline-item">
+                  <div className="stack">
+                    <strong>Predicted Risk Grade: {analysis.riskGrade} ({analysis.riskBand})</strong>
+                    <span>Simulated Score: {analysis.creditScore}</span>
+                    <span>Estimated Rate: {analysis.interestRate}%</span>
+                    <span>Prob. of Default: {analysis.probabilityOfDefault}%</span>
                   </div>
-                );
-              })}
+                  <span className={`pill ${analysis.recommendation === "APPROVE" ? "status-active" : "status-defaulted"}`}>
+                    {analysis.recommendation}
+                  </span>
+                </div>
+                <div className="timeline-item">
+                  <div className="stack">
+                    <strong>Financial Ratios</strong>
+                    <span>Debt-to-Income: {analysis.metrics?.debtToIncome}%</span>
+                    <span>Loan-to-Income: {analysis.metrics?.loanToIncome}%</span>
+                    <span>EMI-to-Income: {analysis.metrics?.emiToIncome}%</span>
+                  </div>
+                </div>
+                <div className="timeline-item">
+                  <div className="stack">
+                    <strong>Underwriting Assessment</strong>
+                    <span style={{ lineHeight: 1.5 }}>{analysis.decisionReason}</span>
+                  </div>
+                </div>
+              </div>
+              <button 
+                className="ghost-button" 
+                style={{ marginTop: 24 }} 
+                onClick={() => setAnalysis(null)}
+              >
+                Clear Analysis
+              </button>
             </div>
-          </div>
+          ) : (
+            <div className="panel">
+              <h3>Loan health</h3>
+              <div className="timeline-list">
+                {loans.map((loan) => {
+                  const nextRepayment = loan.repayments.find((item) => item.status !== "PAID");
+                  return (
+                    <div className="timeline-item" key={loan.id}>
+                      <div className="stack">
+                        <strong>
+                          ${Number(loan.amount).toLocaleString()} | {loan.riskGrade}
+                        </strong>
+                        <span>
+                          {loan.status} | Review {loan.reviewStatus} | EMI ${Number(loan.emiAmount).toLocaleString()}
+                        </span>
+                        <span>
+                          {loan.riskBand || "Pending"} risk | PD {Number(loan.probabilityOfDefault || 0).toFixed(2)}%
+                        </span>
+                      </div>
+                      {nextRepayment ? (
+                        <button
+                          className="ghost-button"
+                          onClick={() => handleRepayment(loan.id, nextRepayment.amountPaid)}
+                        >
+                          Pay next EMI
+                        </button>
+                      ) : (
+                        <span className="pill status-closed">Settled</span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
       </section>
     </main>
