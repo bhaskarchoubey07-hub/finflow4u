@@ -212,15 +212,45 @@ async function reviewLoanApplication(loanId, reviewerId, payload) {
       select: { id: true, name: true, email: true }
     });
 
+    const updateData = {
+      reviewStatus,
+      reviewNotes: payload.reviewNotes,
+      reviewedAt: new Date(),
+      reviewedBy: reviewerId,
+      status: nextStatus
+    };
+
+    let newEmiAmount;
+    if (approved && payload.overrideRate !== undefined) {
+      updateData.interestRate = payload.overrideRate;
+      updateData.recommendedRate = payload.overrideRate;
+      newEmiAmount = calculateEmi(Number(loan.amount), payload.overrideRate, loan.termMonths);
+      updateData.emiAmount = newEmiAmount;
+    }
+    if (approved && payload.overrideGrade !== undefined) {
+      updateData.riskGrade = payload.overrideGrade;
+    }
+    if (approved && payload.overridePD !== undefined) {
+      updateData.probabilityOfDefault = payload.overridePD;
+    }
+
+    if (approved && payload.overrideScore !== undefined) {
+      await tx.user.update({
+        where: { id: loan.borrowerId },
+        data: { creditScore: payload.overrideScore }
+      });
+    }
+
+    if (newEmiAmount !== undefined) {
+      await tx.repayment.updateMany({
+        where: { loanId: loan.id, status: RepaymentStatus.PENDING },
+        data: { amountPaid: newEmiAmount }
+      });
+    }
+
     const updated = await tx.loanRequest.update({
       where: { id: loanId },
-      data: {
-        reviewStatus,
-        reviewNotes: payload.reviewNotes,
-        reviewedAt: new Date(),
-        reviewedBy: reviewerId,
-        status: nextStatus
-      },
+      data: updateData,
       include: {
         borrower: true,
         reviewer: true

@@ -12,6 +12,14 @@ export default function AdminDashboard() {
   const [ledger, setLedger] = useState(null);
   const [message, setMessage] = useState("");
   const [user, setUser] = useState(null);
+  const [activeReviewLoan, setActiveReviewLoan] = useState(null);
+  const [reviewForm, setReviewForm] = useState({
+    overrideScore: "",
+    overrideRate: "",
+    overrideGrade: "",
+    overridePD: "",
+    reviewNotes: ""
+  });
 
   async function loadAdminData() {
     try {
@@ -35,11 +43,11 @@ export default function AdminDashboard() {
     loadAdminData();
   }, []);
 
-  async function handleReview(loanId, reviewStatus) {
+  async function handleQuickRejectOrInfo(loanId, reviewStatus) {
     const reviewNotes = window.prompt(
-      reviewStatus === "APPROVED"
-        ? "Add an approval note for the borrower"
-        : "Add a rejection or revision note"
+      reviewStatus === "CHANGES_REQUESTED"
+        ? "Add a request for more information"
+        : "Add a rejection note"
     );
 
     if (!reviewNotes) {
@@ -51,12 +59,35 @@ export default function AdminDashboard() {
       await apiRequest(`/admin/loan/${loanId}/review`, {
         method: "PATCH",
         token,
-        body: {
-          reviewStatus,
-          reviewNotes
-        }
+        body: { reviewStatus, reviewNotes }
       });
       setMessage(`Loan marked as ${reviewStatus.toLowerCase().replaceAll("_", " ")}.`);
+      loadAdminData();
+    } catch (error) {
+      setMessage(error.message);
+    }
+  }
+
+  async function handleReviewSubmit(e) {
+    e.preventDefault();
+    if (!activeReviewLoan) return;
+
+    try {
+      const token = getToken();
+      await apiRequest(`/admin/loan/${activeReviewLoan.id}/review`, {
+        method: "PATCH",
+        token,
+        body: {
+          reviewStatus: "APPROVED",
+          reviewNotes: reviewForm.reviewNotes || "Approved by admin.",
+          overrideScore: Number(reviewForm.overrideScore) || undefined,
+          overrideRate: Number(reviewForm.overrideRate) || undefined,
+          overrideGrade: reviewForm.overrideGrade || undefined,
+          overridePD: Number(reviewForm.overridePD) || undefined
+        }
+      });
+      setMessage("Loan configured and approved successfully.");
+      setActiveReviewLoan(null);
       loadAdminData();
     } catch (error) {
       setMessage(error.message);
@@ -155,16 +186,86 @@ export default function AdminDashboard() {
                   <span>{loan.decisionReason}</span>
                 </div>
                 <div className="review-actions">
-                  <button className="ghost-button" onClick={() => handleReview(loan.id, "CHANGES_REQUESTED")}>
+                  <button className="ghost-button" onClick={() => handleQuickRejectOrInfo(loan.id, "CHANGES_REQUESTED")}>
                     Request Info
                   </button>
-                  <button className="ghost-button" onClick={() => handleReview(loan.id, "REJECTED")}>
+                  <button className="ghost-button" onClick={() => handleQuickRejectOrInfo(loan.id, "REJECTED")}>
                     Reject
                   </button>
-                  <button className="primary-button small" onClick={() => handleReview(loan.id, "APPROVED")}>
-                    Approve
+                  <button
+                    className="primary-button small"
+                    onClick={() => {
+                      setActiveReviewLoan(loan);
+                      setReviewForm({
+                        overrideScore: loan.borrower.creditScore || "",
+                        overrideRate: Number(loan.recommendedRate || loan.interestRate).toFixed(2),
+                        overrideGrade: loan.riskGrade || "",
+                        overridePD: Number(loan.probabilityOfDefault || 0).toFixed(2),
+                        reviewNotes: ""
+                      });
+                    }}
+                  >
+                    Configure & Approve
                   </button>
                 </div>
+                {activeReviewLoan?.id === loan.id && (
+                  <form className="panel nested-panel" onSubmit={handleReviewSubmit} style={{ marginTop: 16 }}>
+                    <h4>Manual Underwriting Overrides</h4>
+                    <div className="field-grid">
+                      <label>
+                        Final Credit Score
+                        <input
+                          type="number"
+                          value={reviewForm.overrideScore}
+                          onChange={e => setReviewForm({ ...reviewForm, overrideScore: e.target.value })}
+                        />
+                      </label>
+                      <label>
+                        Final Interest Rate (%)
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={reviewForm.overrideRate}
+                          onChange={e => setReviewForm({ ...reviewForm, overrideRate: e.target.value })}
+                        />
+                      </label>
+                      <label>
+                        Final Risk Grade
+                        <input
+                          type="text"
+                          value={reviewForm.overrideGrade}
+                          onChange={e => setReviewForm({ ...reviewForm, overrideGrade: e.target.value })}
+                        />
+                      </label>
+                      <label>
+                        Probability of Default (%)
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={reviewForm.overridePD}
+                          onChange={e => setReviewForm({ ...reviewForm, overridePD: e.target.value })}
+                        />
+                      </label>
+                      <label style={{ gridColumn: "1 / -1" }}>
+                        Approval Notes
+                        <input
+                          type="text"
+                          placeholder="Optional notes for borrower"
+                          value={reviewForm.reviewNotes}
+                          onChange={e => setReviewForm({ ...reviewForm, reviewNotes: e.target.value })}
+                        />
+                      </label>
+                    </div>
+                    <div className="review-actions">
+                      <button type="button" className="ghost-button" onClick={() => setActiveReviewLoan(null)}>
+                        Cancel
+                      </button>
+                      <button type="submit" className="primary-button">
+                        Confirm Approval
+                      </button>
+                    </div>
+                  </form>
+                )}
               </div>
             ))}
             {!loans.length ? <div className="empty-card">No pending applications right now.</div> : null}

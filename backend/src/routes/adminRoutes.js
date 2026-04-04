@@ -14,7 +14,11 @@ const reviewLoanSchema = z.object({
   }),
   body: z.object({
     reviewStatus: z.enum(["APPROVED", "REJECTED", "CHANGES_REQUESTED"]),
-    reviewNotes: z.string().min(5).max(500)
+    reviewNotes: z.string().min(5).max(500),
+    overrideScore: z.coerce.number().int().min(300).max(850).optional(),
+    overrideRate: z.coerce.number().positive().max(50).optional(),
+    overrideGrade: z.string().min(1).max(2).optional(),
+    overridePD: z.coerce.number().positive().max(100).optional()
   })
 });
 
