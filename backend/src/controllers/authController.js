@@ -95,7 +95,10 @@ async function forgotPassword(req, res) {
   const user = await prisma.user.findUnique({ where: { email } });
   
   if (!user) {
-    return res.json({ message: "If that email is registered, a reset link has been sent." });
+    return res.json({ 
+      message: "If that email is registered, a reset link has been sent.",
+      _devOnlyError: "No user found with that email. Please enter a registered email to test." 
+    });
   }
 
   const resetToken = jwt.sign({ userId: user.id, reset: true }, env.jwtSecret, { expiresIn: "15m" });

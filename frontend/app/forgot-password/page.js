@@ -9,12 +9,14 @@ export default function ForgotPasswordPage() {
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(false);
   const [devLink, setDevLink] = useState("");
+  const [devError, setDevError] = useState("");
 
   async function handleSubmit(event) {
     event.preventDefault();
     setLoading(true);
     setStatus("");
     setDevLink("");
+    setDevError("");
 
     try {
       const response = await apiRequest("/auth/forgot-password", {
@@ -25,6 +27,9 @@ export default function ForgotPasswordPage() {
       setStatus(response.message || "Reset link sent.");
       if (response._devOnlyResetLink) {
         setDevLink(response._devOnlyResetLink);
+      }
+      if (response._devOnlyError) {
+        setDevError(response._devOnlyError);
       }
     } catch (error) {
       setStatus(error.message);
@@ -60,6 +65,14 @@ export default function ForgotPasswordPage() {
                 <strong>Local Dev Link Generated:</strong>
                 <br/>
                 <a href={devLink} style={{ color: "var(--foreground)", textDecoration: "underline", wordBreak: "break-all" }}>{devLink}</a>
+              </p>
+            </div>
+          )}
+
+          {devError && (
+            <div className="panel error-card" style={{ marginTop: "12px", background: "rgba(255, 0, 0, 0.05)" }}>
+              <p style={{ fontSize: "13px", color: "var(--warning)" }}>
+                <strong>Dev Alert:</strong> {devError}
               </p>
             </div>
           )}
