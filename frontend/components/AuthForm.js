@@ -109,6 +109,24 @@ export default function AuthForm({ mode }) {
       <button className="primary-button" disabled={loading} type="submit">
         {loading ? "Please wait..." : isRegister ? "Register" : "Login"}
       </button>
+
+      <footer style={{ marginTop: "24px", textAlign: "center", fontSize: "14px" }}>
+        {isRegister ? (
+          <p>
+            Already have an account?{" "}
+            <Link href="/login" style={{ color: "var(--teal)", textDecoration: "none" }}>
+              Login here
+            </Link>
+          </p>
+        ) : (
+          <p>
+            Don't have an account?{" "}
+            <Link href="/register" style={{ color: "var(--teal)", textDecoration: "none" }}>
+              Register here
+            </Link>
+          </p>
+        )}
+      </footer>
     </form>
   );
 }

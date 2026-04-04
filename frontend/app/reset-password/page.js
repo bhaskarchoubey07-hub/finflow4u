@@ -2,6 +2,7 @@
 
 import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 import Header from "../../components/Header";
 import { apiRequest } from "../../lib/api";
 
@@ -93,6 +94,10 @@ function ResetPasswordForm() {
       <button className="primary-button" disabled={loading} type="submit">
         {loading ? "Resetting..." : "Reset Password"}
       </button>
+
+      <footer style={{ marginTop: "24px", textAlign: "center" }}>
+        <Link href="/login" style={{ fontSize: "14px", color: "var(--teal)", textDecoration: "none" }}>← Back to Login</Link>
+      </footer>
     </form>
   );
 }
