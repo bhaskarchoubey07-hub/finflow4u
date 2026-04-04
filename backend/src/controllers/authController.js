@@ -89,8 +89,61 @@ async function me(req, res) {
   return res.json({ user: req.user });
 }
 
+async function forgotPassword(req, res) {
+  const { email } = req.validated.body;
+
+  const user = await prisma.user.findUnique({ where: { email } });
+  
+  if (!user) {
+    return res.json({ message: "If that email is registered, a reset link has been sent." });
+  }
+
+  const resetToken = jwt.sign({ userId: user.id, reset: true }, env.jwtSecret, { expiresIn: "15m" });
+  const resetLink = `http://localhost:3000/reset-password?token=${resetToken}`;
+
+  await notifyUser(user.id, {
+    channels: [NotificationChannel.EMAIL, NotificationChannel.IN_APP],
+    type: "password-reset",
+    subject: "Password Reset Request",
+    message: `You requested a password reset. Click here to reset your password: ${resetLink} . This link expires in 15 minutes.`
+  });
+
+  return res.json({ 
+    message: "If that email is registered, a reset link has been sent.",
+    _devOnlyResetLink: resetLink 
+  });
+}
+
+async function resetPassword(req, res) {
+  const { token, newPassword } = req.validated.body;
+
+  try {
+    const decoded = jwt.verify(token, env.jwtSecret);
+    
+    if (!decoded.reset || !decoded.userId) {
+      return res.status(400).json({ message: "Invalid reset token." });
+    }
+
+    const passwordHash = await bcrypt.hash(newPassword, 10);
+
+    await prisma.user.update({
+      where: { id: decoded.userId },
+      data: { passwordHash }
+    });
+
+    return res.json({ message: "Password has been successfully reset." });
+  } catch (error) {
+    if (error.name === "TokenExpiredError") {
+      return res.status(400).json({ message: "Reset token has expired." });
+    }
+    return res.status(400).json({ message: "Invalid reset token." });
+  }
+}
+
 module.exports = {
   register,
   login,
-  me
+  me,
+  forgotPassword,
+  resetPassword
 };

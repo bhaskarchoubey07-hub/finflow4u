@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { apiRequest } from "../lib/api";
 import { setSession } from "../lib/auth";
 
@@ -83,7 +84,11 @@ export default function AuthForm({ mode }) {
         />
         {isRegister ? (
           <span className="field-hint">Use at least 8 characters, one uppercase letter, and one number.</span>
-        ) : null}
+        ) : (
+          <div style={{ marginTop: "4px", textAlign: "right" }}>
+            <Link href="/forgot-password" style={{ fontSize: "12px", color: "var(--teal)", textDecoration: "none" }}>Forgot Password?</Link>
+          </div>
+        )}
       </label>
 
       {isRegister ? (

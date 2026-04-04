@@ -2,7 +2,7 @@ const express = require("express");
 const { z } = require("zod");
 const asyncHandler = require("../utils/asyncHandler");
 const validate = require("../middleware/validate");
-const { register, login, me } = require("../controllers/authController");
+const { register, login, me, forgotPassword, resetPassword } = require("../controllers/authController");
 const { authenticate } = require("../middleware/auth");
 
 const router = express.Router();
@@ -24,6 +24,19 @@ const loginSchema = z.object({
   body: z.object({
     email: z.string().email(),
     password: z.string().min(8)
+  })
+});
+
+const forgotPasswordSchema = z.object({
+  body: z.object({
+    email: z.string().email()
+  })
+});
+
+const resetPasswordSchema = z.object({
+  body: z.object({
+    token: z.string().min(10),
+    newPassword: z.string().min(8).regex(/[A-Z]/).regex(/[0-9]/)
   })
 });
 
@@ -52,5 +65,21 @@ router.post("/login", validate(loginSchema), asyncHandler(login));
  *       - bearerAuth: []
  */
 router.get("/me", authenticate, asyncHandler(me));
+
+/**
+ * @swagger
+ * /auth/forgot-password:
+ *   post:
+ *     summary: Request a password reset link
+ */
+router.post("/forgot-password", validate(forgotPasswordSchema), asyncHandler(forgotPassword));
+
+/**
+ * @swagger
+ * /auth/reset-password:
+ *   post:
+ *     summary: Reset password using the emailed token
+ */
+router.post("/reset-password", validate(resetPasswordSchema), asyncHandler(resetPassword));
 
 module.exports = router;
