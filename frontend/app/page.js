@@ -1,101 +1,107 @@
 import Link from "next/link";
-import Header from "../components/Header";
-import { API_URL } from "../lib/api";
-
-export const metadata = {
-  title: "Home | LendGrid Infrastructure",
-  description: "Marketplace Lending Infrastructure. Fund borrowers faster. Price risk smarter. Track returns clearly.",
-};
-
-const benefits = [
-  "Risk-tiered underwriting with transparent pricing",
-  "Marketplace discovery with expected return visibility",
-  "EMI scheduling, repayment tracking, and default escalation"
-];
+import Button from "../components/ui/Button";
 
 export default function HomePage() {
   return (
-    <main className="min-h-screen bg-[#fafafa]">
-      <Header />
-      <div className="relative overflow-hidden">
-        {/* Subtle Background Pattern */}
-        <div className="absolute inset-x-0 -top-40 -z-10 transform-gpu overflow-hidden blur-3xl sm:-top-80">
-          <div className="relative left-[calc(50%-11rem)] aspect-[1155/678] w-[36.125rem] -translate-x-1/2 rotate-[30deg] bg-gradient-to-tr from-indigo-200 to-emerald-200 opacity-20 sm:left-[calc(50%-30rem)] sm:w-[72.1875rem]"></div>
-        </div>
-        
-        <section className="page-shell pt-24 pb-32 grid grid-cols-1 lg:grid-cols-12 gap-16 items-center">
-          <div className="lg:col-span-7 space-y-10 animate-in slide-in-from-left duration-1000">
-            <div>
-              <span className="eyebrow bg-indigo-50 text-indigo-600 border border-indigo-100 mb-6">Marketplace Lending v2.0</span>
-              <h1 className="text-6xl font-black tracking-tight text-slate-900 leading-[0.95] mb-8">
-                Institutional Lending <span className="text-indigo-600">Infrastructure.</span>
-              </h1>
-              <p className="text-xl text-slate-500 font-medium max-w-2xl leading-relaxed">
-                FinFlow is an industry-grade P2P ecosystem with real-time risk simulation, 
-                automated repayment intelligence, and high-fidelity lender tools.
-              </p>
+    <main className="min-h-screen bg-background">
+      {/* Hero Section */}
+      <section className="relative pt-20 pb-32 overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="text-center max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-1000">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 border border-indigo-100 text-primary text-xs font-bold uppercase tracking-wider">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+              </span>
+              Next-Gen P2P Infrastructure
             </div>
             
-            <div className="flex flex-wrap items-center gap-6">
-              <Link href="/register" className="primary-button !py-4 !px-10 !text-base shadow-indigo-100">
-                Launch Platform
+            <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight text-slate-900 leading-[1.1]">
+              The Operating System for <br />
+              <span className="text-primary">Institutional Lending.</span>
+            </h1>
+            
+            <p className="text-xl text-slate-500 font-medium max-w-2xl mx-auto leading-relaxed">
+              Scale your capital deployment with AI-powered risk scoring, automated EMI management, and institutional-grade portfolio analytics.
+            </p>
+            
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
+              <Link href="/register">
+                <Button size="lg" className="w-full sm:w-auto h-14 px-10 text-base">
+                  Launch Platform
+                </Button>
               </Link>
-              <Link href="/marketplace" className="ghost-button !py-4 !px-10 !text-base !border-indigo-100 !text-indigo-600 hover:!bg-indigo-50">
-                Explore Exchange
+              <Link href="/marketplace">
+                <Button variant="outline" size="lg" className="w-full sm:w-auto h-14 px-10 text-base">
+                  Explore Marketplace
+                </Button>
               </Link>
             </div>
             
-            <div className="pt-10 border-t border-slate-100 flex items-center gap-8">
-               <div className="flex flex-col">
-                  <span className="text-2xl font-black text-slate-900">8.5%</span>
-                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Target APR</span>
-               </div>
-               <div className="w-px h-10 bg-slate-100"></div>
-               <div className="flex flex-col">
-                  <span className="text-2xl font-black text-slate-900">140ms</span>
-                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Risk Scoring</span>
-               </div>
-               <div className="w-px h-10 bg-slate-100"></div>
-               <div className="flex flex-col">
-                  <span className="text-2xl font-black text-slate-900">Tier A-D</span>
-                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Risk Allocation</span>
-               </div>
-            </div>
-          </div>
-
-          <div className="lg:col-span-5 animate-in zoom-in duration-1000">
-            <div className="panel p-1 border-white/50 bg-white/30 backdrop-blur-3xl shadow-2xl relative">
-              <div className="panel p-8 bg-indigo-950 text-white border-0 shadow-none overflow-hidden relative">
-                 <div className="absolute top-0 right-0 p-4">
-                    <div className="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center font-black">AI</div>
-                 </div>
-                 <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Platform Stats</span>
-                 <h3 className="text-4xl font-black mt-2 mb-8 tabular-nums">₹24.8M</h3>
-                 
-                 <div className="space-y-5">
-                    <div className="flex justify-between items-end border-b border-white/10 pb-3">
-                       <span className="text-xs font-bold text-indigo-300 uppercase">Capital Deployed</span>
-                       <span className="text-base font-black">₹1,84,02,100</span>
-                    </div>
-                    <div className="flex justify-between items-end border-b border-white/10 pb-3">
-                       <span className="text-xs font-bold text-indigo-300 uppercase">Weighted ROI</span>
-                       <span className="text-base font-black text-emerald-400">12.2%</span>
-                    </div>
-                    <div className="flex justify-between items-end border-b border-white/10 pb-3">
-                       <span className="text-xs font-bold text-indigo-300 uppercase">Default Exposure</span>
-                       <span className="text-base font-black text-rose-400">0.82%</span>
-                    </div>
-                 </div>
-
-                 <div className="mt-10 p-4 bg-white/5 border border-white/5 rounded-2xl text-xs font-medium text-indigo-200 leading-relaxed italic">
-                    "Platform algorithms optimized for low-volatility yield preservation in high-interest environments."
-                 </div>
+            {/* Social Proof / Stats */}
+            <div className="pt-16 grid grid-cols-2 md:grid-cols-4 gap-8 border-t border-slate-100">
+              <div className="space-y-1">
+                <p className="text-3xl font-black text-slate-900">₹24.8M+</p>
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Capital Managed</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-3xl font-black text-slate-900">12.2%</p>
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Weighted ROI</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-3xl font-black text-slate-900">0.82%</p>
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Default Rate</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-3xl font-black text-slate-900">Tier A-D</p>
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Risk Graded</p>
               </div>
             </div>
           </div>
-        </section>
-      </div>
+        </div>
+
+        {/* Decorative Background Elements */}
+        <div className="absolute top-0 right-0 -z-0 opacity-20 pointer-events-none translate-x-1/4 -translate-y-1/4">
+           <div className="w-[800px] h-[800px] rounded-full bg-gradient-to-br from-indigo-200 to-sky-100 blur-3xl"></div>
+        </div>
+      </section>
+
+      {/* Feature Grid Section */}
+      <section className="bg-white py-32 border-y border-slate-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+            <div className="space-y-4">
+              <div className="w-12 h-12 bg-indigo-50 rounded-2xl flex items-center justify-center text-primary">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-bold text-slate-900">Lightning Underwriting</h3>
+              <p className="text-slate-500 font-medium">Get credit decisions in milliseconds using our advanced behavioral ML analysis engine.</p>
+            </div>
+            
+            <div className="space-y-4">
+              <div className="w-12 h-12 bg-sky-50 rounded-2xl flex items-center justify-center text-secondary">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-bold text-slate-900">Institutional Trust</h3>
+              <p className="text-slate-500 font-medium">Secured with enterprise-grade encryption and audited financial reporting for all stakeholders.</p>
+            </div>
+
+            <div className="space-y-4">
+              <div className="w-12 h-12 bg-emerald-50 rounded-2xl flex items-center justify-center text-emerald-600">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-bold text-slate-900">Seamless Liquidity</h3>
+              <p className="text-slate-500 font-medium">Deposit capital and start earning yield instantly with our automated portfolio distribution tools.</p>
+            </div>
+          </div>
+        </div>
+      </section>
     </main>
   );
 }
-

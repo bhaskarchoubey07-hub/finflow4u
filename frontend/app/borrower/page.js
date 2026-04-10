@@ -1,20 +1,20 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Header from "../../components/Header";
-import StatCard from "../../components/StatCard";
+import DashboardShell from "../../components/DashboardShell";
+import { Card, Badge, Progress, Input } from "../../components/ui/Core";
+import Button from "../../components/ui/Button";
 import CreditScoreMeter from "../../components/ui/CreditScoreMeter";
-import ChatAdvisor from "../../components/ui/ChatAdvisor";
 import { apiRequest } from "../../lib/api";
 import { getToken, getUser } from "../../lib/auth";
 import { launchRazorpayCheckout, pollPaymentStatus } from "../../lib/payments";
 
 const initialForm = {
-  amount: 10000,
-  purpose: "Working capital",
+  amount: 50000,
+  purpose: "Business Expansion",
   termMonths: 12,
-  annualIncome: 36000,
-  existingDebt: 2500,
+  annualIncome: 1200000,
+  existingDebt: 50000,
   employmentStatus: "Full-time"
 };
 
@@ -24,34 +24,13 @@ export default function BorrowerDashboard() {
   const [message, setMessage] = useState("");
   const [user, setUser] = useState(null);
   const [walletData, setWalletData] = useState(null);
-  const [paymentState, setPaymentState] = useState(null);
   const [analysis, setAnalysis] = useState(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-
-  async function handleAnalyze(event) {
-    if (event) event.preventDefault();
-    setMessage("");
-    setIsAnalyzing(true);
-
-    try {
-      const token = getToken();
-      const response = await apiRequest("/loan/analyze", {
-        method: "POST",
-        token,
-        body: form
-      });
-      setAnalysis(response);
-      setMessage("Eligibility check completed.");
-    } catch (error) {
-      setMessage(error.message);
-    } finally {
-      setIsAnalyzing(false);
-    }
-  }
 
   async function loadLoans() {
     try {
       const token = getToken();
+      if (!token) return;
       const [data, wallet] = await Promise.all([
         apiRequest("/loan/my-loans", { token }),
         apiRequest("/payments/wallet", { token })
@@ -59,7 +38,7 @@ export default function BorrowerDashboard() {
       setLoans(data.loans || []);
       setWalletData(wallet);
     } catch (error) {
-      setMessage(error.message);
+      console.error(error);
     }
   }
 
@@ -68,24 +47,38 @@ export default function BorrowerDashboard() {
     loadLoans();
   }, []);
 
-  async function handleApply(event) {
-    event.preventDefault();
-    setMessage("");
-
+  const handleApply = async (e) => {
+    e.preventDefault();
     try {
       const token = getToken();
-      const response = await apiRequest("/loan/apply", {
+      await apiRequest("/loan/apply", {
         method: "POST",
         token,
         body: form
       });
-
-      setMessage(`Application submitted successfully!`);
+      setMessage("Application submitted successfully!");
       loadLoans();
     } catch (error) {
       setMessage(error.message);
     }
-  }
+  };
+
+  const handleAnalyze = async () => {
+    setIsAnalyzing(true);
+    try {
+      const token = getToken();
+      const response = await apiRequest("/loan/analyze", {
+        method: "POST",
+        token,
+        body: form
+      });
+      setAnalysis(response);
+    } catch (error) {
+      setMessage(error.message);
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
 
   async function handleRepayment(loanId, amountPaid) {
     try {
@@ -107,273 +100,171 @@ export default function BorrowerDashboard() {
         amount: Math.round(Number(amountPaid)),
         name: "FinFlow Repayments",
         description: "Borrower EMI repayment",
-        prefill: {
-          name: user?.name || "Borrower",
-          email: user?.email || ""
-        },
-        onSuccess: async (gatewayResponse) =>
-          apiRequest("/payments/razorpay/verify", {
+        prefill: { name: user?.name, email: user?.email },
+        onSuccess: async (res) => {
+          await apiRequest("/payments/razorpay/verify", {
             method: "POST",
             token,
             body: {
-              orderId: gatewayResponse.razorpay_order_id,
-              paymentId: gatewayResponse.razorpay_payment_id,
-              signature: gatewayResponse.razorpay_signature
+                orderId: res.razorpay_order_id,
+                paymentId: res.razorpay_payment_id,
+                signature: res.razorpay_signature
             }
-          })
+          });
+          loadLoans();
+        }
       });
-      setPaymentState({ status: "verifying", paymentId: intent.payment.id });
-      const verified = await pollPaymentStatus({
-        paymentId: intent.payment.id,
-        token,
-        apiRequest
-      });
-      setPaymentState({ status: verified?.status || "pending", paymentId: intent.payment.id });
-      loadLoans();
     } catch (error) {
-      setPaymentState({ status: "failed" });
       setMessage(error.message);
     }
   }
 
-  const activeLoans = loans.filter((loan) => loan.status === "ACTIVE" || loan.status === "FUNDED").length;
-  const defaults = loans.filter((loan) => loan.status === "DEFAULTED").length;
+  const activeLoansCount = loans.filter(l => l.status === 'ACTIVE').length;
 
   return (
-
-    <main className="min-h-screen bg-[#fafafa] pb-24">
-      <Header />
-      <section className="page-shell">
-        <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
-          <div className="animate-in slide-in-from-left duration-700">
-            <span className="eyebrow">Enterprise Dashboard</span>
-            <h1 className="text-4xl font-extrabold tracking-tight text-slate-900 mt-2">
-              Welcome, {user?.name?.split(' ')[0] || "User"}
-            </h1>
-            <p className="text-slate-500 font-medium mt-1">Monitor your capital access and AI credit insights.</p>
+    <DashboardShell 
+      title={`Welcome back, ${user?.name?.split(' ')[0] || 'User'}`}
+      description="Access institutional-grade capital and monitor your credit health."
+      actions={
+        <Card className="!p-3 !bg-emerald-50 border-emerald-100 flex items-center gap-3">
+             <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
+             <span className="text-xs font-black text-emerald-800 tabular-nums">Wallet: ₹{Number(walletData?.wallet?.balance || 0).toLocaleString()}</span>
+        </Card>
+      }
+    >
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2 space-y-8">
+          {/* Action Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <Card className="p-6">
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Limit</p>
+                <p className="text-2xl font-black text-slate-900">₹5,00,000</p>
+            </Card>
+            <Card className="p-6">
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Active Loans</p>
+                <p className="text-2xl font-black text-slate-900">{activeLoansCount}</p>
+            </Card>
+            <Card className="p-6">
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Avg interest</p>
+                <p className="text-2xl font-black text-slate-900">12.4%</p>
+            </Card>
           </div>
-          <div className="flex items-center gap-3 animate-in slide-in-from-right duration-700">
-             <div className="bg-white px-5 py-2.5 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-3">
-                 <div className="w-2.5 h-2.5 bg-emerald-500 rounded-full animate-pulse"></div>
-                 <span className="text-sm font-black text-slate-700">Wallet: ₹{Number(walletData?.wallet?.balance || 0).toLocaleString()}</span>
-              </div>
-          </div>
-        </div>
 
-        {message && (
-          <div className="info-banner animate-in fade-in slide-in-from-top-4 duration-500">
-            <svg className="w-5 h-5 mr-3 shrink-0" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-            </svg>
-            <span className="text-sm font-bold">{message}</span>
-          </div>
-        )}
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-          <div className="lg:col-span-2 space-y-10">
-            <div className="stats-grid">
-              <StatCard label="Loan Requests" value={String(loans.length)} />
-              <StatCard label="Active Portfolio" value={String(activeLoans)} />
-              <StatCard label="Default Risk" value={String(defaults)} />
-            </div>
-
-            <div className="panel p-10 bg-white">
-              <div className="flex items-center gap-3 mb-8">
-                <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white">
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                  </svg>
-                </div>
-                <div>
-                  <h3 className="text-xl font-extrabold text-slate-900">Capital Application</h3>
-                  <p className="text-sm text-slate-500 font-medium">Configure your loan parameters below.</p>
-                </div>
-              </div>
-              
-              <form onSubmit={handleApply} className="space-y-8">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  <div className="space-y-2">
-                    <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Principal Amount (₹)</label>
-                    <input
-                      type="number"
-                      value={form.amount}
-                      onChange={(e) => setForm({ ...form, amount: Number(e.target.value) })}
-                      placeholder="Enter amount"
+          {/* Form & List */}
+          <Card className="p-8">
+            <h3 className="text-lg font-bold text-slate-900 mb-6">Request Capital</h3>
+            <form onSubmit={handleApply} className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <Input 
+                      label="Principal Amount (₹)" 
+                      type="number" 
+                      value={form.amount} 
+                      onChange={e => setForm({...form, amount: e.target.value})}
                     />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Repayment Term</label>
-                    <select
-                      value={form.termMonths}
-                      onChange={(e) => setForm({ ...form, termMonths: Number(e.target.value) })}
-                    >
-                      <option value={12}>12 Months (Standard)</option>
-                      <option value={24}>24 Months (Extended)</option>
-                      <option value={36}>36 Months (Business)</option>
-                      <option value={60}>60 Months (Long-term)</option>
-                    </select>
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Verified Annual Income</label>
-                    <input
-                      type="number"
-                      value={form.annualIncome}
-                      onChange={(e) => setForm({ ...form, annualIncome: Number(e.target.value) })}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Outstanding Obligations</label>
-                    <input
-                      type="number"
-                      value={form.existingDebt}
-                      onChange={(e) => setForm({ ...form, existingDebt: Number(e.target.value) })}
-                    />
-                  </div>
-                </div>
-
-                <div className="flex flex-col sm:flex-row gap-4">
-                  <button 
-                    type="submit" 
-                    className="primary-button flex-grow !py-4"
-                  >
-                    Submit Official Request
-                  </button>
-                  <button 
-                    type="button" 
-                    onClick={handleAnalyze}
-                    disabled={isAnalyzing}
-                    className="ghost-button flex-grow !py-4 !border-indigo-200 !text-indigo-600 hover:!bg-indigo-50"
-                  >
-                    {isAnalyzing ? "Processing AI Analysis..." : "Run Eligibility Simulation"}
-                  </button>
-                </div>
-              </form>
-            </div>
-
-            <div className="panel p-0 overflow-hidden">
-              <div className="p-8 border-b border-slate-50">
-                <h3 className="text-xl font-extrabold text-slate-900">Application Portfolio</h3>
-                <p className="text-sm text-slate-500 font-medium mt-1">Real-time status of your borrowing history.</p>
-              </div>
-              
-              {loans.length === 0 ? (
-                <div className="p-20 text-center bg-slate-50/30">
-                  <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <svg className="w-8 h-8 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                  </div>
-                  <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">Awaiting First Application</p>
-                </div>
-              ) : (
-                <div className="divide-y divide-slate-50">
-                  {loans.map((loan) => (
-                    <div key={loan.id} className="p-6 flex flex-col md:flex-row justify-between items-center group hover:bg-slate-50/50 transition-colors">
-                      <div className="flex items-center gap-6">
-                         <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black text-sm border ${
-                           loan.status === 'ACTIVE' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-slate-50 text-slate-400 border-slate-100'
-                         }`}>
-                           {loan.riskGrade}
-                         </div>
-                         <div>
-                             <div className="flex items-center gap-2">
-                                <span className="text-lg font-black text-slate-900">₹{Number(loan.amount).toLocaleString()}</span>
-                                <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-tighter ${
-                                  loan.status === 'ACTIVE' ? 'status-active' : 'status-pending'
-                                }`}>
-                                  {loan.status}
-                                </span>
-                             </div>
-                             <p className="text-xs text-slate-400 font-bold mt-0.5">
-                               {loan.interestRate}% APY • Monthly EMI: ₹{Number(loan.emiAmount).toLocaleString()}
-                             </p>
-                         </div>
-                      </div>
-                      
-                      {loan.status === 'ACTIVE' && (
-                        <button 
-                          onClick={() => handleRepayment(loan.id, loan.emiAmount)}
-                          className="primary-button !py-2 !px-6 !text-xs !bg-indigo-50 !text-indigo-600 !border-indigo-100 hover:!bg-indigo-600 hover:!text-white"
+                    <div className="space-y-1.5 w-full">
+                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">Repayment Term</label>
+                        <select 
+                          className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-4 focus:ring-indigo-100 transition-all cursor-pointer"
+                          value={form.termMonths}
+                          onChange={e => setForm({...form, termMonths: e.target.value})}
                         >
-                          Execute EMI Payment
-                        </button>
-                      )}
+                            <option value="12">12 Months</option>
+                            <option value="24">24 Months</option>
+                            <option value="36">36 Months</option>
+                        </select>
                     </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div className="space-y-10 animate-in fade-in slide-in-from-bottom-6 duration-1000">
-            <CreditScoreMeter score={user?.creditScore || 700} />
-
-            {analysis ? (
-              <div className="panel p-8 !bg-indigo-900 text-white border-indigo-700 shadow-indigo-200/50">
-                <div className="flex justify-between items-start mb-8">
-                  <div>
-                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-300">AI Intelligence Insight</span>
-                    <h3 className="text-xl font-black mt-1">Eligibility Verdict</h3>
-                  </div>
-                  <div className={`px-3 py-1 rounded-lg text-xs font-black uppercase border ${
-                    analysis.recommendation === 'APPROVE' ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' : 'bg-rose-500/20 text-rose-300 border-rose-500/30'
-                  }`}>
-                    {analysis.recommendation === 'APPROVE' ? 'High Probability' : 'Low Probability'}
-                  </div>
                 </div>
 
-                <div className="space-y-8">
-                  <div className="p-5 rounded-2xl bg-white/10 border border-white/10 backdrop-blur-md">
-                     <p className="text-sm leading-relaxed font-semibold italic">"{analysis.decisionReason}"</p>
-                  </div>
+                <div className="flex gap-4">
+                    <Button type="submit" className="flex-1 h-12">Submit Application</Button>
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      className="flex-1 h-12"
+                      onClick={handleAnalyze}
+                      disabled={isAnalyzing}
+                    >
+                        {isAnalyzing ? "Analyzing Risk..." : "Run AI Simulation"}
+                    </Button>
+                </div>
+            </form>
+          </Card>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="p-4 bg-white/5 rounded-2xl border border-white/5">
-                      <p className="text-[10px] font-black text-indigo-300 uppercase tracking-widest mb-1">Risk Factor</p>
-                      <p className="text-xl font-black">{analysis.probabilityOfDefault?.toFixed(1)}%</p>
+          <Card className="p-0 overflow-hidden">
+             <div className="p-6 border-b border-slate-50">
+                <h3 className="text-lg font-bold text-slate-900">Loan Portfolio</h3>
+             </div>
+             <div className="divide-y divide-slate-100">
+                {loans.map(loan => (
+                    <div key={loan.id} className="p-6 flex justify-between items-center group">
+                        <div className="flex items-center gap-4">
+                            <div className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center font-black text-xs text-slate-500">{loan.riskGrade}</div>
+                            <div>
+                                <p className="text-sm font-black text-slate-900">₹{Number(loan.amount).toLocaleString()}</p>
+                                <p className="text-[10px] font-bold text-slate-400 uppercase">{loan.status} • {loan.interestRate}% APR</p>
+                            </div>
+                        </div>
+                        {loan.status === 'ACTIVE' && (
+                             <Button size="sm" variant="ghost" className="border border-slate-200" onClick={() => handleRepayment(loan.id, loan.emiAmount)}>
+                                Pay EMI
+                             </Button>
+                        )}
+                        {loan.status === 'PENDING' && (
+                            <Badge>Processing</Badge>
+                        )}
                     </div>
-                    <div className="p-4 bg-white/5 rounded-2xl border border-white/5">
-                      <p className="text-[10px] font-black text-indigo-300 uppercase tracking-widest mb-1">Target Tier</p>
-                      <p className="text-xl font-black">Grade {analysis.riskGrade}</p>
-                    </div>
-                  </div>
-
-                  <button 
-                    onClick={() => setAnalysis(null)}
-                    className="w-full text-[10px] font-black text-indigo-300 hover:text-white transition-colors uppercase tracking-[0.3em] mt-4"
-                  >
-                    Clear Analysis
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div className="panel p-8 bg-indigo-600 text-white overflow-hidden relative group">
-                <div className="absolute -top-12 -right-12 w-48 h-48 bg-white/10 rounded-full blur-3xl group-hover:bg-white/20 transition-all duration-500"></div>
-                <div className="relative z-10">
-                  <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center mb-8 border border-white/20">
-                    <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" />
-                    </svg>
-                  </div>
-                  <h3 className="text-2xl font-black mb-2 leading-tight">Elite Financial Access</h3>
-                  <p className="text-indigo-100 text-sm leading-relaxed mb-8 font-medium">
-                    Run the advanced AI simulation to unlock optimized interest rates based on your verified income data.
-                  </p>
-                  <button 
-                     onClick={handleAnalyze}
-                     className="w-full py-4 bg-white text-indigo-600 font-black rounded-2xl hover:shadow-xl hover:scale-[1.02] transition-all"
-                  >
-                    Initiate Smart Check
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
+                ))}
+                {loans.length === 0 && (
+                     <div className="p-12 text-center text-slate-400 font-medium text-sm">No applications recorded.</div>
+                )}
+             </div>
+          </Card>
         </div>
-      </section>
-      <ChatAdvisor />
-    </main>
+
+        <div className="space-y-8">
+            <CreditScoreMeter score={user?.creditScore || 720} />
+            
+            {analysis && (
+                 <Card className="p-8 bg-slate-900 text-white border-slate-800 relative shadow-2xl shadow-indigo-100">
+                    <div className="absolute top-0 right-0 p-4">
+                        <Badge variant="success" className="bg-emerald-500/20 text-emerald-300 border-0">High Eligibility</Badge>
+                    </div>
+                    <div className="space-y-6">
+                        <div>
+                            <p className="text-[10px] font-black text-indigo-300 uppercase tracking-widest mb-1">AI Verdict</p>
+                            <p className="text-sm font-semibold italic text-slate-100 leading-relaxed">"{analysis.decisionReason}"</p>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4 pt-4 border-t border-white/10">
+                            <div>
+                                <p className="text-[10px] font-black text-indigo-300 uppercase tracking-widest mb-1">Defaults</p>
+                                <p className="text-lg font-black">{analysis.probabilityOfDefault?.toFixed(1)}%</p>
+                            </div>
+                            <div>
+                                <p className="text-[10px] font-black text-indigo-300 uppercase tracking-widest mb-1">Risk Grade</p>
+                                <p className="text-lg font-black">{analysis.riskGrade}</p>
+                            </div>
+                        </div>
+                        <Button variant="ghost" className="w-full text-indigo-300 hover:text-white hover:bg-white/5 border-white/10" onClick={() => setAnalysis(null)}>Clear Analysis</Button>
+                    </div>
+                 </Card>
+            )}
+
+            <Card className="p-8 bg-indigo-600 text-white relative group overflow-hidden">
+                <div className="absolute -right-8 -bottom-8 w-32 h-32 bg-white/10 rounded-full group-hover:scale-125 transition-all duration-500 blur-2xl"></div>
+                <div className="relative z-10 space-y-4">
+                    <h3 className="text-xl font-black">Financial Pulse</h3>
+                    <p className="text-sm font-medium text-indigo-100 leading-relaxed">Our behavioral engine tracks your repayment consistency to optimize future credit limits.</p>
+                    <div className="pt-4">
+                         <div className="flex justify-between items-center mb-2">
+                             <span className="text-[10px] font-black uppercase">Limit Health</span>
+                             <span className="text-[10px] font-black uppercase">84%</span>
+                         </div>
+                         <Progress value={84} className="bg-indigo-700 h-1.5" />
+                    </div>
+                </div>
+            </Card>
+        </div>
+      </div>
+    </DashboardShell>
   );
 }
-
-

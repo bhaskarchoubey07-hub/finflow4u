@@ -2,18 +2,20 @@
 
 import React, { useState } from 'react';
 import NumericStepper from './NumericStepper';
+import { Card, Badge } from './Core';
+import Button from './Button';
 import { apiRequest } from '../../lib/api';
 import { getToken } from '../../lib/auth';
 
 const RiskAnalyzerForm = () => {
     const [form, setForm] = useState({
         age: 35,
-        creditHistoryLength: 8,
-        numberOfExistingLoans: 2,
-        annualIncome: 65000,
-        loanAmount: 25000,
-        latePaymentHistory: 1,
-        debtToIncome: 0.35
+        creditHistoryLength: 12,
+        numberOfExistingLoans: 1,
+        annualIncome: 1500000,
+        loanAmount: 200000,
+        latePaymentHistory: 0,
+        debtToIncome: 0.25
     });
 
     const [result, setResult] = useState(null);
@@ -38,110 +40,113 @@ const RiskAnalyzerForm = () => {
 
     return (
         <div className="space-y-12">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 <NumericStepper 
-                    label="Age" 
+                    label="Applicant Age" 
                     value={form.age} 
                     onChange={(v) => setForm({...form, age: v})} 
-                    min={18} max={100} 
+                    min={18} max={99} 
                 />
                 <NumericStepper 
-                    label="Credit History (Years)" 
+                    label="Credit History (Yrs)" 
                     value={form.creditHistoryLength} 
                     onChange={(v) => setForm({...form, creditHistoryLength: v})} 
                 />
                 <NumericStepper 
-                    label="Existing Loans" 
+                    label="Active Obligations" 
                     value={form.numberOfExistingLoans} 
                     onChange={(v) => setForm({...form, numberOfExistingLoans: v})} 
                 />
                 <NumericStepper 
-                    label="Annual Income" 
+                    label="Annual Gross Income" 
                     value={form.annualIncome} 
                     onChange={(v) => setForm({...form, annualIncome: v})} 
-                    unit="₹" step={1000}
+                    unit="₹" step={50000}
                 />
                 <NumericStepper 
-                    label="Loan Amount" 
+                    label="Requested Amount" 
                     value={form.loanAmount} 
                     onChange={(v) => setForm({...form, loanAmount: v})} 
-                    unit="₹" step={1000}
+                    unit="₹" step={25000}
                 />
                 <NumericStepper 
-                    label="Late Payments (Count)" 
+                    label="Payment Deviations" 
                     value={form.latePaymentHistory} 
                     onChange={(v) => setForm({...form, latePaymentHistory: v})} 
                 />
 
-                <div className="lg:col-span-2 space-y-3">
-                    <div className="flex justify-between items-center">
-                        <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Debt-to-Income Ratio</label>
-                        <span className="text-sm font-black text-indigo-600">{Math.round(form.debtToIncome * 100)}%</span>
+                <div className="lg:col-span-2 space-y-4">
+                    <div className="flex justify-between items-end">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">DTI Simulation</label>
+                        <span className="text-sm font-black text-primary tabular-nums">{Math.round(form.debtToIncome * 100)}%</span>
                     </div>
-                    <input 
-                        type="range" 
-                        min="0" max="1" step="0.01"
-                        value={form.debtToIncome}
-                        onChange={(e) => setForm({...form, debtToIncome: parseFloat(e.target.value)})}
-                        className="w-full accent-indigo-600 cursor-pointer"
-                    />
+                    <div className="relative pt-1">
+                        <input 
+                            type="range" 
+                            min="0" max="1" step="0.01"
+                            value={form.debtToIncome}
+                            onChange={(e) => setForm({...form, debtToIncome: parseFloat(e.target.value)})}
+                            className="w-full h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-primary"
+                        />
+                    </div>
                 </div>
             </div>
 
-            <button 
+            <Button 
                 onClick={handleAnalyze}
                 disabled={loading}
-                className="w-full primary-button !py-4 flex items-center justify-center gap-3 text-lg"
+                className="w-full h-14 text-base gap-3"
             >
-                {loading ? "Processing Deep Scanner..." : (
+                {loading ? "Initializing Forensic Pulse..." : (
                     <>
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" />
                         </svg>
-                        Run AI Intelligence Scanner
+                        Execute Risk Simulation
                     </>
                 )}
-            </button>
+            </Button>
 
             {result && (
-                <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 panel p-8 bg-indigo-950 text-white border-indigo-900 shadow-xl">
-                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8">
+                <Card className="p-10 bg-slate-900 border-slate-800 text-white shadow-2xl shadow-indigo-100 relative overflow-hidden">
+                    <div className="absolute top-0 right-0 p-8">
+                         <div className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest border ${
+                             result.recommendation === 'APPROVE' 
+                                ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/20' 
+                                : 'bg-rose-500/20 text-rose-400 border-rose-500/20'
+                         }`}>
+                             {result.recommendation}
+                         </div>
+                    </div>
+                    
+                    <div className="space-y-10 relative z-10">
                         <div>
-                            <span className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.2em]">Risk Verdict</span>
-                            <h3 className="text-3xl font-black mt-1">Grade {result.riskGrade} Analysis</h3>
+                            <p className="text-[10px] font-black text-indigo-300 uppercase tracking-widest mb-1">Risk Allocation</p>
+                            <h3 className="text-4xl font-black italic tracking-tighter">Grade {result.riskGrade}</h3>
                         </div>
-                        <div className={`px-6 py-2 rounded-xl text-sm font-black uppercase tracking-widest border-2 ${
-                            result.recommendation === 'APPROVE' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border-rose-500/20'
-                        }`}>
-                            {result.recommendation.replaceAll("_", " ")}
+
+                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 py-8 border-y border-white/10">
+                             <StatItem label="Forensic Score" value={result.creditScore} />
+                             <StatItem label="Loss Prob" value={`${result.probabilityOfDefault}%`} />
+                             <StatItem label="LTV Ratio" value={`${result.metrics.loanToIncome}%`} />
+                             <StatItem label="Volatility" value="Low" />
                         </div>
-                    </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                         <div className="p-5 rounded-2xl bg-white/5 border border-white/5">
-                            <p className="text-[10px] font-black text-indigo-300 uppercase tracking-widest mb-1">Score</p>
-                            <p className="text-3xl font-black">{result.creditScore}</p>
-                         </div>
-                         <div className="p-5 rounded-2xl bg-white/5 border border-white/5">
-                            <p className="text-[10px] font-black text-indigo-300 uppercase tracking-widest mb-1">Default Prob</p>
-                            <p className="text-3xl font-black">{result.probabilityOfDefault}%</p>
-                         </div>
-                         <div className="md:col-span-2 p-5 rounded-2xl bg-white/5 border border-white/5">
-                            <p className="text-[10px] font-black text-indigo-300 uppercase tracking-widest mb-1">Core Metrics</p>
-                            <div className="flex gap-4 mt-1">
-                                <span className="text-xs font-bold text-indigo-100">DTI: {result.metrics.debtToIncome}%</span>
-                                <span className="text-xs font-bold text-indigo-100">LTI: {result.metrics.loanToIncome}%</span>
-                            </div>
-                         </div>
+                        <p className="text-sm font-medium text-slate-300 leading-relaxed italic border-l-2 border-indigo-500 pl-6">
+                            "{result.decisionReason}"
+                        </p>
                     </div>
-
-                    <div className="mt-8 p-6 rounded-2xl bg-white/5 border border-indigo-800 italic text-sm text-indigo-100 leading-relaxed">
-                        "{result.decisionReason}"
-                    </div>
-                </div>
+                </Card>
             )}
         </div>
     );
 };
+
+const StatItem = ({ label, value }) => (
+    <div className="space-y-1">
+        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{label}</p>
+        <p className="text-xl font-black tabular-nums">{value}</p>
+    </div>
+);
 
 export default RiskAnalyzerForm;

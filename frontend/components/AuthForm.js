@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { apiRequest } from "../lib/api";
 import { setSession } from "../lib/auth";
+import { Card, Input } from "./ui/Core";
+import Button from "./ui/Button";
 
 export default function AuthForm({ mode }) {
   const router = useRouter();
@@ -46,87 +48,99 @@ export default function AuthForm({ mode }) {
   }
 
   return (
-    <form className="auth-card" onSubmit={handleSubmit}>
-      <h1>{isRegister ? "Create your account" : "Welcome back"}</h1>
-      <p>{isRegister ? "Join as a borrower or lender." : "Access your lending workspace."}</p>
+    <Card className="max-w-md w-full p-10 !rounded-3xl shadow-2xl shadow-indigo-100">
+      <div className="text-center mb-8">
+        <h1 className="text-3xl font-black text-slate-900 leading-tight">
+          {isRegister ? "Join FinFlow" : "Institutional Login"}
+        </h1>
+        <p className="text-sm font-medium text-slate-400 mt-2">
+          {isRegister ? "Create your institutional lending account." : "Access your lending and borrowing workspace."}
+        </p>
+      </div>
 
-      {isRegister ? (
-        <label>
-          Full name
-          <input
+      <form className="space-y-6" onSubmit={handleSubmit}>
+        {isRegister && (
+          <Input
+            label="Full Name"
             value={form.name}
-            onChange={(event) => setForm({ ...form, name: event.target.value })}
-            placeholder="Priya Sharma"
+            onChange={(e) => setForm({ ...form, name: e.target.value })}
+            placeholder="e.g. Rahul Singh"
             required
           />
-        </label>
-      ) : null}
+        )}
 
-      <label>
-        Email
-        <input
+        <Input
+          label="Email Address"
           type="email"
           value={form.email}
-          onChange={(event) => setForm({ ...form, email: event.target.value })}
-          placeholder="name@example.com"
+          onChange={(e) => setForm({ ...form, email: e.target.value })}
+          placeholder="name@company.com"
           required
         />
-      </label>
 
-      <label>
-        Password
-        <input
-          type="password"
-          value={form.password}
-          onChange={(event) => setForm({ ...form, password: event.target.value })}
-          placeholder="Password123!"
-          required
-        />
-        {isRegister ? (
-          <span className="field-hint">Use at least 8 characters, one uppercase letter, and one number.</span>
-        ) : (
-          <div style={{ marginTop: "4px", textAlign: "right" }}>
-            <Link href="/forgot-password" style={{ fontSize: "12px", color: "var(--teal)", textDecoration: "none" }}>Forgot Password?</Link>
+        <div className="space-y-1.5">
+          <Input
+            label="Password"
+            type="password"
+            value={form.password}
+            onChange={(e) => setForm({ ...form, password: e.target.value })}
+            placeholder="••••••••"
+            required
+          />
+          {!isRegister && (
+            <div className="text-right">
+              <Link href="/forgot-password" size="sm" className="text-xs font-bold text-primary hover:underline">
+                Forgot password?
+              </Link>
+            </div>
+          )}
+        </div>
+
+        {isRegister && (
+          <div className="space-y-1.5">
+            <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest">Account Type</label>
+            <div className="grid grid-cols-2 gap-3">
+               <button
+                  type="button"
+                  onClick={() => setForm({...form, role: 'BORROWER'})}
+                  className={`py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${
+                    form.role === 'BORROWER' ? 'bg-primary text-white shadow-lg' : 'bg-slate-50 text-slate-400 border border-slate-100'
+                  }`}
+               >
+                 Borrower
+               </button>
+               <button
+                  type="button"
+                  onClick={() => setForm({...form, role: 'LENDER'})}
+                  className={`py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${
+                    form.role === 'LENDER' ? 'bg-primary text-white shadow-lg' : 'bg-slate-50 text-slate-400 border border-slate-100'
+                  }`}
+               >
+                 Lender
+               </button>
+            </div>
           </div>
         )}
-      </label>
 
-      {isRegister ? (
-        <label>
-          Account type
-          <select
-            value={form.role}
-            onChange={(event) => setForm({ ...form, role: event.target.value })}
-          >
-            <option value="BORROWER">Borrower</option>
-            <option value="LENDER">Lender</option>
-          </select>
-        </label>
-      ) : null}
-
-      {error ? <div className="error-banner">{error}</div> : null}
-
-      <button className="primary-button" disabled={loading} type="submit">
-        {loading ? "Please wait..." : isRegister ? "Register" : "Login"}
-      </button>
-
-      <footer style={{ marginTop: "24px", textAlign: "center", fontSize: "14px" }}>
-        {isRegister ? (
-          <p>
-            Already have an account?{" "}
-            <Link href="/login" style={{ color: "var(--teal)", textDecoration: "none" }}>
-              Login here
-            </Link>
-          </p>
-        ) : (
-          <p>
-            Don't have an account?{" "}
-            <Link href="/register" style={{ color: "var(--teal)", textDecoration: "none" }}>
-              Register here
-            </Link>
-          </p>
+        {error && (
+          <div className="p-3 bg-rose-50 border border-rose-100 rounded-xl text-rose-600 text-xs font-bold animate-in shake-x duration-500">
+            {error}
+          </div>
         )}
-      </footer>
-    </form>
+
+        <Button className="w-full h-12" disabled={loading} type="submit">
+          {loading ? "Verifying Credentials..." : isRegister ? "Create Account" : "Secure Login"}
+        </Button>
+      </form>
+
+      <div className="mt-10 text-center">
+        <p className="text-sm font-medium text-slate-400">
+          {isRegister ? "Already part of the network?" : "New to FinFlow?"}{" "}
+          <Link href={isRegister ? "/login" : "/register"} className="text-primary font-bold hover:underline">
+            {isRegister ? "Login here" : "Get started now"}
+          </Link>
+        </p>
+      </div>
+    </Card>
   );
 }

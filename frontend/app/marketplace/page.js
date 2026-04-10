@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Header from "../../components/Header";
 import LoanCard from "../../components/ui/LoanCard";
 import { apiRequest } from "../../lib/api";
 import { getToken, getUser } from "../../lib/auth";
+import { Badge } from "../../components/ui/Core";
 
 export default function MarketplacePage() {
   const [loans, setLoans] = useState([]);
@@ -26,7 +26,6 @@ export default function MarketplacePage() {
         setStatus("error");
       }
     }
-
     loadMarketplace();
   }, []);
 
@@ -43,7 +42,7 @@ export default function MarketplacePage() {
     const token = getToken();
 
     if (!user || user.role !== "LENDER") {
-      setMessage("Login as a lender to invest.");
+      setMessage("Please login as a lender to participate in the marketplace.");
       return;
     }
 
@@ -53,11 +52,12 @@ export default function MarketplacePage() {
         token,
         body: {
           loanId: loan.id,
-          amountInvested: 100 // Default investment amount for demo
+          amountInvested: 1000 // Standard chunk for demo
         }
       });
 
-      setMessage(`Invested ₹100 in ${loan.purpose || "Loan"}`);
+      setMessage(`Success! Invested ₹1,000 in ${loan.purpose || "Loan Contract"}`);
+      setTimeout(() => setMessage(""), 5000);
 
       const refreshed = await apiRequest("/loan/marketplace");
       setLoans(refreshed.loans);
@@ -67,75 +67,76 @@ export default function MarketplacePage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#fafafa] pb-24">
-      <Header />
+    <main className="min-h-screen bg-background pb-24">
       <section className="page-shell">
-        <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
+        {/* Header Section */}
+        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end mb-12 gap-8">
           <div className="animate-in slide-in-from-left duration-700">
-            <span className="eyebrow">Enterprise Exchange</span>
-            <h1 className="text-4xl font-extrabold tracking-tight text-slate-900 mt-2">
+            <h1 className="text-4xl font-extrabold tracking-tight text-slate-900">
               Capital Marketplace
             </h1>
             <p className="text-slate-500 font-medium mt-1 max-w-xl">
-              Verified borrowing opportunities structured for institutional-grade yield and precision risk allocation.
+              Access curated lending opportunities with deep behavioral risk scoring and transparent capital tracking.
             </p>
           </div>
           
-          <div className="flex items-center gap-3 bg-white p-1.5 rounded-2xl shadow-sm border border-slate-100 animate-in slide-in-from-right duration-700">
+          <div className="flex flex-wrap items-center gap-2 bg-white p-1.5 rounded-2xl shadow-sm border border-slate-200">
             {["All", "A", "B", "C", "D"].map((grade) => (
               <button
                 key={grade}
                 onClick={() => setActiveFilter(grade)}
-                className={`px-5 py-2 rounded-xl transition-all text-sm font-black tracking-tighter ${
+                className={`px-5 py-2.5 rounded-xl transition-all text-sm font-bold ${
                   activeFilter === grade 
-                    ? "bg-indigo-600 text-white shadow-lg shadow-indigo-100" 
-                    : "text-slate-500 hover:text-indigo-600 hover:bg-slate-50"
+                    ? "bg-primary text-white shadow-lg shadow-indigo-100" 
+                    : "text-slate-500 hover:text-slate-900 hover:bg-slate-50"
                 }`}
               >
-                {grade === "All" ? "Global" : `Grade ${grade}`}
+                {grade === "All" ? "Global Inventory" : `Grade ${grade}`}
               </button>
             ))}
           </div>
         </div>
 
+        {/* Global Notifications */}
         {message && (
-          <div className="info-banner mb-10 animate-in fade-in slide-in-from-top-4 duration-500">
-            <svg className="w-5 h-5 mr-3 shrink-0" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-            </svg>
+          <div className="mb-10 p-4 bg-indigo-600 text-white rounded-2xl shadow-xl shadow-indigo-100 flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-500">
+            <div className="w-6 h-6 bg-white/20 rounded-lg flex items-center justify-center">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                </svg>
+            </div>
             <span className="text-sm font-bold">{message}</span>
           </div>
         )}
 
+        {/* Loading State */}
         {status === "loading" && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {[1, 2, 3, 4, 5, 6].map(i => (
-              <div key={i} className="panel h-96 bg-slate-50/50 border-slate-100 animate-pulse"></div>
+              <div key={i} className="h-72 bg-white/50 border border-slate-200 rounded-3xl animate-pulse"></div>
             ))}
           </div>
         )}
 
+        {/* Loan Grid */}
         {status === "ready" && filteredLoans.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10 animate-in fade-in duration-1000">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 animate-in fade-in duration-1000">
             {filteredLoans.map((loan) => (
               <LoanCard key={loan.id} loan={loan} onInvest={handleInvest} />
             ))}
           </div>
         ) : status === "ready" && (
-          <div className="panel p-24 text-center bg-white border-dashed border-slate-200">
-            <div className="mx-auto w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center mb-6 border border-slate-100">
-              <svg className="w-8 h-8 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="panel p-20 flex flex-col items-center justify-center text-center bg-white border-dashed border-slate-300">
+            <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center mb-6 border border-slate-100 text-slate-300">
+              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
             </div>
-            <h3 className="text-xl font-extrabold text-slate-900">No Match Found</h3>
-            <p className="text-slate-500 font-medium max-w-xs mx-auto mt-2">Adjust your risk filters to discover active opportunities in other grades.</p>
+            <h3 className="text-xl font-bold text-slate-900">No active opportunities</h3>
+            <p className="text-sm text-slate-400 font-medium max-w-xs mt-2">Adjust your risk filters or check back later for new capital requests.</p>
           </div>
         )}
       </section>
     </main>
   );
 }
-
-
-
