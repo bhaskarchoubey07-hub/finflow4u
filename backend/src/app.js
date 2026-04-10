@@ -12,6 +12,7 @@ const investmentRoutes = require("./routes/investmentRoutes");
 const paymentRoutes = require("./routes/paymentRoutes");
 const repaymentRoutes = require("./routes/repaymentRoutes");
 const portfolioRoutes = require("./routes/portfolioRoutes");
+const analysisRoutes = require("./routes/analysisRoutes");
 const errorHandler = require("./middleware/errorHandler");
 
 const app = express();
@@ -67,6 +68,7 @@ app.use("/invest", investmentRoutes);
 app.use("/payments", paymentRoutes);
 app.use("/repayment", repaymentRoutes);
 app.use("/portfolio", portfolioRoutes);
+app.use("/analysis", analysisRoutes);
 
 app.use((req, res) => {
   res.status(404).json({ message: "Route not found." });

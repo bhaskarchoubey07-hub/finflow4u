@@ -56,7 +56,7 @@ const RiskDistributionChart = ({ investments = [] }) => {
             </Pie>
             <Tooltip 
                contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
-               formatter={(value) => `$${Number(value).toLocaleString()}`}
+               formatter={(value) => `₹${Number(value).toLocaleString()}`}
             />
             <Legend verticalAlign="bottom" height={36}/>
           </PieChart>

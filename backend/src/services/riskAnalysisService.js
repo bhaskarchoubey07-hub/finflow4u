@@ -12,6 +12,10 @@ function analyzeBorrower(financials) {
   const loanAmount = Number(financials.loanAmount);
   const termMonths = Number(financials.termMonths || 12);
   const employmentStatus = String(financials.employmentStatus || "");
+  const age = Number(financials.age || 35);
+  const creditHistoryLength = Number(financials.creditHistoryLength || 5);
+  const numberOfExistingLoans = Number(financials.numberOfExistingLoans || 0);
+  const latePaymentHistory = Number(financials.latePaymentHistory || 0);
 
   const debtToIncome = existingDebt / Math.max(annualIncome, 1);
   const loanToIncome = loanAmount / Math.max(annualIncome, 1);
@@ -83,6 +87,44 @@ function analyzeBorrower(financials) {
   } else if (/contract|part/i.test(employmentStatus)) {
     score -= 10;
     reasons.push("Variable employment reduces score slightly.");
+  }
+
+  // --- Advanced Intelligence Factors ---
+  
+  // Age Scoring
+  if (age < 21) {
+    score -= 30;
+    reasons.push("Younger applicants have limited financial history.");
+  } else if (age > 60) {
+    score -= 10;
+    reasons.push("Proximity to retirement may affect long-term repayment.");
+  }
+
+  // Credit History Length
+  if (creditHistoryLength > 10) {
+    score += 60;
+    reasons.push("Extensive credit history demonstrates long-term reliability.");
+  } else if (creditHistoryLength < 2) {
+    score -= 40;
+    reasons.push("Insufficient credit history for a high-confidence verdict.");
+  }
+
+  // Late Payments
+  if (latePaymentHistory === 0) {
+    score += 50;
+    reasons.push("Perfect payment track record is a strong positive indicator.");
+  } else if (latePaymentHistory > 3) {
+    score -= 100;
+    reasons.push("Frequent late payments significantly increase default probability.");
+  } else {
+    score -= 30 * latePaymentHistory;
+    reasons.push(`${latePaymentHistory} recorded late payments suggest moderate risk.`);
+  }
+
+  // Existing Debt Load
+  if (numberOfExistingLoans > 3) {
+    score -= 40;
+    reasons.push("Multiple existing obligations may strain monthly cash flow.");
   }
 
   const creditScore = clamp(Math.round(score), 300, 850);

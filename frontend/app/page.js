@@ -70,12 +70,12 @@ export default function HomePage() {
                     <div className="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center font-black">AI</div>
                  </div>
                  <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Platform Stats</span>
-                 <h3 className="text-4xl font-black mt-2 mb-8 tabular-nums">$24.8M</h3>
+                 <h3 className="text-4xl font-black mt-2 mb-8 tabular-nums">₹24.8M</h3>
                  
                  <div className="space-y-5">
                     <div className="flex justify-between items-end border-b border-white/10 pb-3">
                        <span className="text-xs font-bold text-indigo-300 uppercase">Capital Deployed</span>
-                       <span className="text-base font-black">$18,402,100</span>
+                       <span className="text-base font-black">₹1,84,02,100</span>
                     </div>
                     <div className="flex justify-between items-end border-b border-white/10 pb-3">
                        <span className="text-xs font-bold text-indigo-300 uppercase">Weighted ROI</span>

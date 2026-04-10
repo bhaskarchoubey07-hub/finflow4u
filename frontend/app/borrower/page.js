@@ -104,7 +104,7 @@ export default function BorrowerDashboard() {
       await launchRazorpayCheckout({
         keyId: intent.providerConfig?.keyId,
         orderId: intent.payment.providerOrderId,
-        amount: Number(amountPaid),
+        amount: Math.round(Number(amountPaid)),
         name: "FinFlow Repayments",
         description: "Borrower EMI repayment",
         prefill: {
@@ -154,9 +154,9 @@ export default function BorrowerDashboard() {
           </div>
           <div className="flex items-center gap-3 animate-in slide-in-from-right duration-700">
              <div className="bg-white px-5 py-2.5 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-3">
-                <div className="w-2.5 h-2.5 bg-emerald-500 rounded-full animate-pulse"></div>
-                <span className="text-sm font-black text-slate-700">Wallet: ${Number(walletData?.wallet?.balance || 0).toLocaleString()}</span>
-             </div>
+                 <div className="w-2.5 h-2.5 bg-emerald-500 rounded-full animate-pulse"></div>
+                 <span className="text-sm font-black text-slate-700">Wallet: ₹{Number(walletData?.wallet?.balance || 0).toLocaleString()}</span>
+              </div>
           </div>
         </div>
 
@@ -193,7 +193,7 @@ export default function BorrowerDashboard() {
               <form onSubmit={handleApply} className="space-y-8">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <div className="space-y-2">
-                    <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Principal Amount ($)</label>
+                    <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Principal Amount (₹)</label>
                     <input
                       type="number"
                       value={form.amount}
@@ -276,17 +276,17 @@ export default function BorrowerDashboard() {
                            {loan.riskGrade}
                          </div>
                          <div>
-                            <div className="flex items-center gap-2">
-                               <span className="text-lg font-black text-slate-900">${Number(loan.amount).toLocaleString()}</span>
-                               <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-tighter ${
-                                 loan.status === 'ACTIVE' ? 'status-active' : 'status-pending'
-                               }`}>
-                                 {loan.status}
-                               </span>
-                            </div>
-                            <p className="text-xs text-slate-400 font-bold mt-0.5">
-                              {loan.interestRate}% APY • Monthly EMI: ${Number(loan.emiAmount).toLocaleString()}
-                            </p>
+                             <div className="flex items-center gap-2">
+                                <span className="text-lg font-black text-slate-900">₹{Number(loan.amount).toLocaleString()}</span>
+                                <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-tighter ${
+                                  loan.status === 'ACTIVE' ? 'status-active' : 'status-pending'
+                                }`}>
+                                  {loan.status}
+                                </span>
+                             </div>
+                             <p className="text-xs text-slate-400 font-bold mt-0.5">
+                               {loan.interestRate}% APY • Monthly EMI: ₹{Number(loan.emiAmount).toLocaleString()}
+                             </p>
                          </div>
                       </div>
                       

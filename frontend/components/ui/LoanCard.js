@@ -4,18 +4,18 @@ import FundingProgress from './FundingProgress';
 
 const LoanCard = ({ loan, onInvest }) => {
   return (
-    <div className="panel p-6 flex flex-col h-full group hover:border-indigo-400/50 transition-all duration-300">
-      <div className="flex justify-between items-start mb-4">
+    <div className="panel p-5 flex flex-col h-full group hover:border-indigo-400/50 transition-all duration-300">
+      <div className="flex justify-between items-start mb-3">
         <div>
           <div className="flex items-center gap-2">
-            <h3 className="text-lg font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">
+            <h3 className="text-base font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">
               {loan.purpose || "Personal Loan"}
             </h3>
             {loan.riskGrade === 'A' && (
               <span className="text-[10px] font-black bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded tracking-tighter uppercase">Trending</span>
             )}
           </div>
-          <p className="text-xs font-medium text-slate-500">ID: {loan.id.substring(0, 8)}</p>
+          <p className="text-[10px] font-medium text-slate-400">ID: {loan.id.substring(0, 8)}</p>
         </div>
         <RiskBadge grade={loan.riskGrade} />
       </div>
@@ -40,18 +40,13 @@ const LoanCard = ({ loan, onInvest }) => {
       </div>
 
       <div className="mt-auto pt-4 border-t border-slate-50 flex items-center justify-between">
-        <div className="flex items-center space-x-2">
-          <div className="w-8 h-8 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-600 font-bold text-xs border border-indigo-100">
-            {loan.borrower?.name?.charAt(0) || "B"}
-          </div>
-          <div className="flex flex-col">
-            <p className="text-xs font-bold text-slate-800 leading-tight">{loan.borrower?.name || "Anonymous"}</p>
-            <p className="text-[10px] text-indigo-500 font-bold">Verified Score</p>
-          </div>
+        <div className="flex flex-col">
+          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Available</p>
+          <p className="text-sm font-black text-slate-900 leading-tight">₹{(loan.amount - (loan.fundedAmount || 0)).toLocaleString()}</p>
         </div>
         <button 
           onClick={() => onInvest(loan)}
-          className="primary-button !py-2 !px-4 !text-xs group-hover:scale-[1.05]"
+          className="primary-button !py-2 !px-6 !text-xs group-hover:scale-[1.05]"
         >
           Invest Now
         </button>

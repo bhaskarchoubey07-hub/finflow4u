@@ -57,7 +57,8 @@ export default function MarketplacePage() {
         }
       });
 
-      setMessage(`Invested $100 in ${loan.purpose || "Loan"}`);
+      setMessage(`Invested ₹100 in ${loan.purpose || "Loan"}`);
+
       const refreshed = await apiRequest("/loan/marketplace");
       setLoans(refreshed.loans);
     } catch (error) {

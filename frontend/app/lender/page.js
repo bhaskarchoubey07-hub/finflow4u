@@ -65,15 +65,19 @@ export default function LenderDashboard() {
             <div className="stats-grid">
               <StatCard
                 label="Total Capital"
-                value={`$${portfolio.summary.totalInvested.toLocaleString()}`}
+                value={portfolio.summary.totalInvested.toLocaleString()}
+                symbol="₹"
               />
               <StatCard
                 label="Net Accrual"
-                value={`$${portfolio.summary.expectedReturns.toFixed(2)}`}
+                value={portfolio.summary.expectedReturns.toFixed(2)}
+                symbol="₹"
+                trend={`+${((portfolio.summary.expectedReturns / portfolio.summary.totalInvested) * 100).toFixed(1)}% Yield`}
               />
               <StatCard
                 label="Yield Collected"
-                value={`$${portfolio.summary.repaymentsReceived.toFixed(2)}`}
+                value={portfolio.summary.repaymentsReceived.toFixed(2)}
+                symbol="₹"
               />
             </div>
 
@@ -103,7 +107,7 @@ export default function LenderDashboard() {
                             <div className="flex items-center gap-6">
                                <div className="flex flex-col">
                                   <div className="flex items-center gap-3">
-                                     <span className="text-xl font-black text-slate-900 tabular-nums">${investment.amountInvested.toLocaleString()}</span>
+                                     <span className="text-xl font-black text-slate-900 tabular-nums">₹{investment.amountInvested.toLocaleString()}</span>
                                      <RiskBadge grade={investment.loan.riskGrade} />
                                   </div>
                                   <p className="text-xs text-slate-400 font-bold mt-1">
@@ -114,7 +118,7 @@ export default function LenderDashboard() {
                             <div className="text-right">
                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">Accrual View</p>
                                <p className="text-sm font-black text-emerald-600 transition-transform group-hover:scale-105">
-                                 +${((investment.amountInvested * investment.loan.interestRate) / 100).toFixed(2)}
+                                 +₹{((investment.amountInvested * investment.loan.interestRate) / 100).toFixed(2)}
                                </p>
                             </div>
                          </div>
@@ -146,7 +150,7 @@ export default function LenderDashboard() {
                               </div>
                            </div>
                            <p className={`text-sm font-black tabular-nums ${pyment.status === 'SUCCEEDED' ? 'text-emerald-600' : 'text-slate-400'}`}>
-                             ${pyment.amount.toLocaleString()}
+                             ₹{pyment.amount.toLocaleString()}
                            </p>
                         </div>
                       ))}
@@ -169,13 +173,13 @@ export default function LenderDashboard() {
                      <div className="space-y-6 mb-10">
                         <div className="p-6 rounded-2xl bg-white/5 border border-white/5 backdrop-blur-sm">
                            <p className="text-[11px] font-black text-indigo-400 uppercase tracking-widest mb-1">Available Liquidity</p>
-                           <p className="text-4xl font-black tabular-nums">${Number(portfolio.wallet.balance).toLocaleString()}</p>
+                           <p className="text-4xl font-black tabular-nums">₹{Number(portfolio.wallet.balance).toLocaleString()}</p>
                         </div>
                         <div className="space-y-3 px-1">
                           {portfolio.wallet.accounts.map((acc) => (
                             <div key={acc.type} className="flex justify-between items-center opacity-80 group cursor-default">
                                <span className="text-[11px] font-bold text-indigo-300 uppercase tracking-wide group-hover:text-white transition-colors">{acc.type.replaceAll("_", " ")}</span>
-                               <span className="text-sm font-black tabular-nums text-white">${Number(acc.balance).toLocaleString()}</span>
+                               <span className="text-sm font-black tabular-nums text-white">₹{Number(acc.balance).toLocaleString()}</span>
                             </div>
                           ))}
                         </div>
@@ -187,6 +191,28 @@ export default function LenderDashboard() {
                       />
                   </div>
                 )}
+
+                <div 
+                  className="panel p-8 bg-indigo-600 text-white overflow-hidden relative group cursor-pointer" 
+                  onClick={() => window.location.href='/lab'}
+                >
+                  <div className="absolute -top-12 -right-12 w-48 h-48 bg-white/10 rounded-full blur-3xl group-hover:bg-white/20 transition-all duration-500"></div>
+                  <div className="relative z-10">
+                    <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center mb-6 border border-white/20">
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                        </svg>
+                    </div>
+                    <h3 className="text-xl font-black mb-2">Forensic Intelligence</h3>
+                    <p className="text-indigo-100 text-xs leading-relaxed mb-6 font-medium">
+                      Analyze batch financial data for manipulation patterns and capital anomalies.
+                    </p>
+                    <button className="w-full py-3 bg-white text-indigo-600 font-black rounded-xl hover:shadow-xl transition-all">
+                      Launch Scanner
+                    </button>
+                  </div>
+                </div>
+
               </div>
             </div>
           </div>

@@ -29,8 +29,8 @@ const ROIChart = ({ data }) => {
           <AreaChart data={chartData}>
             <defs>
               <linearGradient id="colorRoi" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#2563eb" stopOpacity={0.1}/>
-                <stop offset="95%" stopColor="#2563eb" stopOpacity={0}/>
+                <stop offset="5%" stopColor="#4f46e5" stopOpacity={0.1}/>
+                <stop offset="95%" stopColor="#4f46e5" stopOpacity={0}/>
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
@@ -53,7 +53,7 @@ const ROIChart = ({ data }) => {
             <Area 
               type="monotone" 
               dataKey="roi" 
-              stroke="#2563eb" 
+              stroke="#4f46e5" 
               strokeWidth={3}
               fillOpacity={1} 
               fill="url(#colorRoi)" 

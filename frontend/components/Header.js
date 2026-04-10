@@ -19,6 +19,7 @@ export default function Header() {
     { href: "/marketplace", label: "Marketplace" },
     { href: "/borrower", label: "Borrower" },
     { href: "/lender", label: "Lender" },
+    { href: "/lab", label: "FinLab" },
     ...(user?.role === "ADMIN" ? [{ href: "/admin", label: "Admin" }] : [])
   ];
 
