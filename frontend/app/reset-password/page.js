@@ -39,6 +39,7 @@ function ResetPasswordForm() {
 
     setLoading(true);
     setStatus("");
+    console.log("[ResetPage] Submitting password reset with token length:", token?.length);
 
     try {
       const response = await apiRequest("/auth/reset-password", {
@@ -46,12 +47,15 @@ function ResetPasswordForm() {
         body: { token, newPassword: password }
       });
       
+      console.log("[ResetPage] Success:", response.message);
       setStatus("success: " + response.message);
       setTimeout(() => {
         router.push("/login");
       }, 2500);
     } catch (error) {
-      setStatus(error.message);
+      console.error("[ResetPage] Error:", error.message);
+      // Fallback message for user
+      setStatus(error.message || "Failed to reset password. Please check requirements.");
     } finally {
       setLoading(false);
     }

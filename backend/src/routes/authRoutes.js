@@ -2,10 +2,31 @@ const express = require("express");
 const { z } = require("zod");
 const asyncHandler = require("../utils/asyncHandler");
 const validate = require("../middleware/validate");
-const { register, login, me, forgotPassword, resetPassword } = require("../controllers/authController");
+const { register, login, me, forgotPassword, resetPassword, kycUpload, updatePreferences } = require("../controllers/authController");
 const { authenticate } = require("../middleware/auth");
 
 const router = express.Router();
+
+// ... (schemas stay same)
+
+/**
+ * @swagger
+ * /auth/kyc-upload:
+ *   post:
+ *     summary: Upload KYC documents
+ */
+router.post("/kyc-upload", authenticate, asyncHandler(kycUpload));
+
+/**
+ * @swagger
+ * /auth/preferences:
+ *   post:
+ *     summary: Update user preferences (auto-repay)
+ */
+router.post("/preferences", authenticate, asyncHandler(updatePreferences));
+
+router.post("/register", validate(registerSchema), asyncHandler(register));
+
 
 const registerSchema = z.object({
   body: z.object({

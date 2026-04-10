@@ -103,17 +103,36 @@ model User {
   passwordHash String        @map("password_hash")
   role         UserRole
   creditScore  Int?          @map("credit_score")
+  kycStatus    String        @default("PENDING") @map("kyc_status")
+  kycDocUrl    String?       @map("kyc_doc_url")
+  autoRepay    Boolean       @default(true) @map("auto_repay")
   createdAt    DateTime      @default(now()) @map("created_at")
   updatedAt    DateTime      @updatedAt @map("updated_at")
+
   loans        LoanRequest[]
   investments  Investment[]
   reviews      LoanRequest[] @relation("LoanReviewer")
   notifications Notification[]
-  wallets      Wallet[]
-  payments     Payment[]
+  wallets       Wallet[]
+  payments      Payment[]
+  preferences   LenderPreference?
 
   @@map("users")
 }
+
+model LenderPreference {
+  id            String   @id @default(cuid())
+  lenderId      String   @unique @map("lender_id")
+  riskGrades    String[] @map("risk_grades") // e.g. ["A", "B"]
+  minReturn     Decimal  @db.Decimal(5, 2) @map("min_return")
+  maxDuration   Int      @map("max_duration")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+  lender        User     @relation(fields: [lenderId], references: [id])
+
+  @@map("lender_preferences")
+}
+
 
 model LoanRequest {
   id               String      @id @default(cuid())

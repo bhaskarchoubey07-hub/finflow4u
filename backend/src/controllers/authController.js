@@ -119,28 +119,70 @@ async function forgotPassword(req, res) {
 
 async function resetPassword(req, res) {
   const { token, newPassword } = req.validated.body;
+  console.log("[AuthService] Attempting password reset with token:", token ? (token.substring(0, 10) + "...") : "null");
 
   try {
     const decoded = jwt.verify(token, env.jwtSecret);
+    console.log("[AuthService] Token verified successfully for userId:", decoded.userId);
     
     if (!decoded.reset || !decoded.userId) {
-      return res.status(400).json({ message: "Invalid reset token." });
+      console.warn("[AuthService] Token missing reset flag or userId.");
+      return res.status(400).json({ message: "Invalid reset token structure." });
     }
 
     const passwordHash = await bcrypt.hash(newPassword, 10);
 
-    await prisma.user.update({
+    const updatedUser = await prisma.user.update({
       where: { id: decoded.userId },
       data: { passwordHash }
     });
+    console.log("[AuthService] Password updated for user:", updatedUser.email);
 
     return res.json({ message: "Password has been successfully reset." });
   } catch (error) {
+    console.error("[AuthService] Password reset failed:", error.name, error.message);
     if (error.name === "TokenExpiredError") {
-      return res.status(400).json({ message: "Reset token has expired." });
+      return res.status(400).json({ message: "Reset token has expired (15m limit)." });
     }
-    return res.status(400).json({ message: "Invalid reset token." });
+    return res.status(400).json({ message: "Invalid or corrupt reset token." });
   }
+}
+
+async function kycUpload(req, res) {
+  const { docType, docUrl } = req.body;
+  const userId = req.user.id;
+
+  await prisma.user.update({
+    where: { id: userId },
+    data: {
+      kycStatus: "VERIFYING",
+      kycDocUrl: docUrl
+    }
+  });
+
+  await notifyUser(userId, {
+    channels: [NotificationChannel.IN_APP],
+    type: "kyc-update",
+    subject: "KYC Documents Received",
+    message: `Your ${docType.replace("_", " ")} has been received and is under review.`
+  });
+
+  return res.json({ message: "Documents submitted for verification." });
+}
+
+async function updatePreferences(req, res) {
+  const { autoRepay } = req.body;
+  const userId = req.user.id;
+
+  const user = await prisma.user.update({
+    where: { id: userId },
+    data: { autoRepay }
+  });
+
+  return res.json({ 
+    message: `Auto-repayment ${autoRepay ? "enabled" : "disabled"}.`,
+    autoRepay: user.autoRepay 
+  });
 }
 
 module.exports = {
@@ -148,5 +190,8 @@ module.exports = {
   login,
   me,
   forgotPassword,
-  resetPassword
+  resetPassword,
+  kycUpload,
+  updatePreferences
 };
+
