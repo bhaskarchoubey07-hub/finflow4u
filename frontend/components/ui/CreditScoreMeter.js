@@ -23,44 +23,48 @@ const CreditScoreMeter = ({ score }) => {
   };
 
   return (
-    <div className="flex flex-col items-center p-6 bg-white rounded-2xl border border-gray-100 shadow-sm w-full">
-      <div className="relative w-48 h-24 mb-4">
+    <div className="panel p-8 flex flex-col items-center gap-6">
+      <div className="text-center">
+        <span className="eyebrow mb-2">FinFlow AI Rank</span>
+        <h3 className="text-xl font-bold text-slate-900 leading-tight">Your Credit Health</h3>
+      </div>
+
+      <div className="relative w-56 h-28 mb-4">
         {/* Semi-circle background */}
-        <div className="absolute inset-0 border-[16px] border-gray-100 rounded-t-full"></div>
+        <div className="absolute inset-0 border-[20px] border-slate-100 rounded-t-full"></div>
         {/* Progress semi-circle */}
         <div 
-          className="absolute inset-x-0 bottom-0 h-full border-[16px] rounded-t-full transition-all duration-1000 ease-out origin-bottom"
+          className="absolute inset-x-0 bottom-0 h-full border-[20px] rounded-t-full transition-all duration-1000 ease-out origin-bottom"
           style={{ 
             borderColor: getColor(score),
-            clipPath: `polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)`, // Simplified for now
+            clipPath: `inset(0 0 0 0)`, // Show full top half
             transform: `rotate(${(percentage * 1.8) - 90}deg)`,
-            opacity: 0.8
+            filter: 'drop-shadow(0 4px 6px rgba(0,0,0,0.1))'
           }}
         ></div>
-        <div className="absolute inset-0 flex flex-col items-center justify-end pb-2">
-          <span className="text-4xl font-black text-gray-900 leading-none">{score}</span>
-          <span className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">Score</span>
+        <div className="absolute inset-0 flex flex-col items-center justify-end">
+          <span className="text-5xl font-black text-slate-900 tracking-tighter tabular-nums leading-none mb-1">{score}</span>
+          <span className="text-[10px] font-black text-indigo-500 uppercase tracking-widest">Points</span>
         </div>
       </div>
       
-      <div className="text-center">
-        <p className="text-sm font-bold uppercase tracking-wide" style={{ color: getColor(score) }}>
-          {getLabel(score)}
-        </p>
-        <p className="text-xs text-gray-500 mt-1 italic">
-          Your score is calculated based on AI risk modeling.
+      <div className="w-full space-y-4">
+        <div className="flex justify-between items-center p-3 bg-slate-50 border border-slate-100 rounded-xl">
+          <span className="text-xs font-bold text-slate-500 uppercase tracking-wide">Category</span>
+          <span className="text-sm font-black" style={{ color: getColor(score) }}>{getLabel(score)}</span>
+        </div>
+        
+        <p className="text-xs text-slate-400 font-medium leading-relaxed indent-1 text-center italic">
+          "Your AI rank is in the top {Math.max(100 - Math.round(percentage), 3)}% of users with similar profiles."
         </p>
       </div>
       
-      <div className="flex justify-between w-full mt-6 text-[10px] font-bold text-gray-400 px-2">
+      <div className="flex justify-between w-full text-[9px] font-black text-slate-300 uppercase px-1">
         <span>300</span>
-        <span>580</span>
-        <span>670</span>
-        <span>740</span>
-        <span>800</span>
         <span>850</span>
       </div>
     </div>
+
   );
 };
 

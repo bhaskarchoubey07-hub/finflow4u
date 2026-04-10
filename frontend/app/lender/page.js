@@ -32,85 +32,90 @@ export default function LenderDashboard() {
   }, []);
 
   return (
-    <main className="min-h-screen bg-neutral-50 pb-20">
+    <main className="min-h-screen bg-[#fafafa] pb-24">
       <Header />
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        <div className="flex flex-col md:flex-row justify-between items-start mb-10">
-          <div>
-            <span className="text-blue-600 font-bold tracking-wider uppercase text-xs">Lender Dashboard</span>
-            <h1 className="text-3xl font-extrabold text-gray-900 mt-1">
-              {user ? `Portfolio Review: ${user.name}` : "Investment Dashboard"}
+      <section className="page-shell">
+        <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
+          <div className="animate-in slide-in-from-left duration-700">
+            <span className="eyebrow">Institutional Dashboard</span>
+            <h1 className="text-4xl font-extrabold tracking-tight text-slate-900 mt-2">
+              {user ? `Portfolio: ${user.name}` : "Investment Dashboard"}
             </h1>
-            <p className="text-gray-500 mt-1">Monitor your capital deployment and automated yield generation.</p>
+            <p className="text-slate-500 font-medium mt-1">Capital deployment and automated yield distribution.</p>
           </div>
-          <div className="mt-4 md:mt-0">
-             <div className="bg-white px-4 py-2 rounded-lg shadow-sm border border-gray-100 flex items-center">
-                <div className="w-2 h-2 bg-blue-500 rounded-full mr-2"></div>
-                <span className="text-xs font-bold text-gray-600">Lender Account Active</span>
+          <div className="flex items-center gap-3 animate-in slide-in-from-right duration-700">
+             <div className="bg-white px-5 py-2.5 rounded-2xl shadow-sm border border-emerald-100 flex items-center gap-3">
+                <div className="w-2.5 h-2.5 bg-emerald-500 rounded-full"></div>
+                <span className="text-sm font-black text-emerald-900 uppercase tracking-tighter">Lender Active</span>
              </div>
           </div>
         </div>
 
         {message && (
-          <div className="mb-8 p-4 bg-white border-l-4 border-blue-600 shadow-sm flex items-center animate-in fade-in slide-in-from-left-2">
-            <svg className="w-5 h-5 text-blue-600 mr-3" fill="currentColor" viewBox="0 0 20 20">
+          <div className="info-banner animate-in fade-in slide-in-from-top-4 duration-500">
+            <svg className="w-5 h-5 mr-3 shrink-0" fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
             </svg>
-            <span className="text-sm font-medium text-gray-700">{message}</span>
+            <span className="text-sm font-bold">{message}</span>
           </div>
         )}
 
         {portfolio ? (
-          <div className="space-y-8">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+          <div className="space-y-12">
+            <div className="stats-grid">
               <StatCard
-                label="Total Invested"
+                label="Total Capital"
                 value={`$${portfolio.summary.totalInvested.toLocaleString()}`}
               />
               <StatCard
-                label="Expected Yield"
+                label="Net Accrual"
                 value={`$${portfolio.summary.expectedReturns.toFixed(2)}`}
-                tone="success"
               />
               <StatCard
-                label="Cash Collected"
+                label="Yield Collected"
                 value={`$${portfolio.summary.repaymentsReceived.toFixed(2)}`}
-                tone="accent"
               />
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-               <ROIChart />
-               <RiskDistributionChart investments={portfolio.investments} />
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+               <div className="panel p-6 bg-white"><ROIChart /></div>
+               <div className="panel p-6 bg-white"><RiskDistributionChart investments={portfolio.investments} /></div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              <div className="lg:col-span-2 space-y-8">
-                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                   <div className="px-8 py-6 border-b border-gray-50 flex justify-between items-center bg-gray-50/50">
-                      <h3 className="font-bold text-gray-900">Current Investments</h3>
-                      <a href="/marketplace" className="text-xs font-bold text-blue-600 hover:underline">Find new opportunities →</a>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+              <div className="lg:col-span-2 space-y-10">
+                <div className="panel p-0 overflow-hidden bg-white">
+                   <div className="p-8 border-b border-slate-50 flex justify-between items-center bg-slate-50/10">
+                      <div>
+                        <h3 className="text-xl font-extrabold text-slate-900">Active Commitments</h3>
+                        <p className="text-sm text-slate-500 font-medium">Monitoring deployed assets across the market.</p>
+                      </div>
+                      <a href="/marketplace" className="primary-button !py-2 !px-4 !text-xs">Expand Portfolio</a>
                    </div>
-                   <div className="divide-y divide-gray-50">
+                   <div className="divide-y divide-slate-50">
                      {portfolio.investments.length === 0 ? (
-                       <div className="p-10 text-center">
-                          <p className="text-gray-400">No active investments found.</p>
+                       <div className="p-20 text-center bg-slate-50/20">
+                          <p className="text-slate-400 font-black uppercase tracking-widest text-xs">No Assets Deployed</p>
                        </div>
                      ) : (
                        portfolio.investments.map((investment) => (
-                         <div key={investment.id} className="p-6 hover:bg-gray-50 transition-colors flex flex-col md:flex-row justify-between items-center group">
-                            <div className="mb-4 md:mb-0">
-                               <div className="flex items-center space-x-2">
-                                  <span className="font-bold text-gray-900 text-lg">${investment.amountInvested.toLocaleString()}</span>
-                                  <RiskBadge grade={investment.loan.riskGrade} />
+                         <div key={investment.id} className="p-6 hover:bg-slate-50/50 transition-colors flex flex-col md:flex-row justify-between items-center group">
+                            <div className="flex items-center gap-6">
+                               <div className="flex flex-col">
+                                  <div className="flex items-center gap-3">
+                                     <span className="text-xl font-black text-slate-900 tabular-nums">${investment.amountInvested.toLocaleString()}</span>
+                                     <RiskBadge grade={investment.loan.riskGrade} />
+                                  </div>
+                                  <p className="text-xs text-slate-400 font-bold mt-1">
+                                     Client: {investment.loan.borrower.name} • {investment.loan.interestRate}% Yield • {investment.loan.status}
+                                  </p>
                                </div>
-                               <p className="text-xs text-gray-500 mt-1">
-                                  Borrower: {investment.loan.borrower.name} | Rate: {investment.loan.interestRate}% | Status: {investment.loan.status}
-                               </p>
                             </div>
                             <div className="text-right">
-                               <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Est. Return</p>
-                               <p className="text-sm font-bold text-green-600">+${(investment.amountInvested * investment.loan.interestRate / 100).toFixed(2)}</p>
+                               <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">Accrual View</p>
+                               <p className="text-sm font-black text-emerald-600 transition-transform group-hover:scale-105">
+                                 +${((investment.amountInvested * investment.loan.interestRate) / 100).toFixed(2)}
+                               </p>
                             </div>
                          </div>
                        ))
@@ -119,18 +124,28 @@ export default function LenderDashboard() {
                 </div>
 
                 {portfolio.payments?.length > 0 && (
-                  <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                    <div className="px-8 py-6 border-b border-gray-50 bg-gray-50/50">
-                      <h3 className="font-bold text-gray-900">Recent Transactions</h3>
+                  <div className="panel p-0 overflow-hidden bg-white">
+                    <div className="p-8 border-b border-slate-50 bg-slate-50/10">
+                      <h3 className="text-xl font-extrabold text-slate-900">Transaction History</h3>
+                      <p className="text-sm text-slate-500 font-medium mt-1">Audit log for all ledger movements.</p>
                     </div>
-                    <div className="divide-y divide-gray-50">
+                    <div className="divide-y divide-slate-50">
                       {portfolio.payments.map((pyment) => (
-                        <div key={pyment.id} className="p-4 flex justify-between items-center">
-                           <div>
-                              <p className="text-sm font-bold text-gray-800">{pyment.purpose.replaceAll("_", " ")}</p>
-                              <p className="text-[10px] text-gray-400 uppercase">{pyment.status} | {pyment.provider}</p>
+                        <div key={pyment.id} className="p-5 flex justify-between items-center hover:bg-slate-50/30 transition-colors">
+                           <div className="flex items-center gap-4">
+                              <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                                pyment.status === 'SUCCEEDED' ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-400'
+                              }`}>
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d={pyment.amount > 0 ? "M5 10l7-7m0 0l7 7m-7-7v18" : "M19 14l-7 7m0 0l-7-7m7 7V3"} />
+                                </svg>
+                              </div>
+                              <div>
+                                 <p className="text-sm font-black text-slate-800 uppercase tracking-tighter">{pyment.purpose.replaceAll("_", " ")}</p>
+                                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{pyment.status} • {pyment.provider}</p>
+                              </div>
                            </div>
-                           <p className={`text-sm font-bold ${pyment.status === 'SUCCEEDED' ? 'text-green-600' : 'text-gray-400'}`}>
+                           <p className={`text-sm font-black tabular-nums ${pyment.status === 'SUCCEEDED' ? 'text-emerald-600' : 'text-slate-400'}`}>
                              ${pyment.amount.toLocaleString()}
                            </p>
                         </div>
@@ -140,25 +155,30 @@ export default function LenderDashboard() {
                 )}
               </div>
 
-              <div className="space-y-8">
+              <div className="space-y-10">
                 {portfolio.wallet && (
-                  <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
-                     <div className="flex items-center justify-between mb-6">
-                        <h3 className="font-bold text-gray-900">Lender Wallet</h3>
-                        <span className="text-[10px] font-black text-blue-600 uppercase bg-blue-50 px-2 py-0.5 rounded">Verified</span>
+                  <div className="panel p-8 bg-indigo-950 text-white border-indigo-900/50 shadow-indigo-200/50">
+                     <div className="flex items-center justify-between mb-8">
+                        <div>
+                          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-300">Vault Balance</span>
+                          <h3 className="text-xl font-black mt-1">Capital Reserves</h3>
+                        </div>
+                        <span className="text-[10px] font-black text-indigo-400 uppercase border border-indigo-800 px-3 py-1 rounded-full bg-indigo-900/50">Secure</span>
                      </div>
                      
-                     <div className="space-y-4 mb-8">
-                        <div className="p-4 rounded-xl bg-gray-50">
-                           <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">Total Balance</p>
-                           <p className="text-2xl font-black text-gray-900">${Number(portfolio.wallet.balance).toLocaleString()}</p>
+                     <div className="space-y-6 mb-10">
+                        <div className="p-6 rounded-2xl bg-white/5 border border-white/5 backdrop-blur-sm">
+                           <p className="text-[11px] font-black text-indigo-400 uppercase tracking-widest mb-1">Available Liquidity</p>
+                           <p className="text-4xl font-black tabular-nums">${Number(portfolio.wallet.balance).toLocaleString()}</p>
                         </div>
-                        {portfolio.wallet.accounts.map((acc) => (
-                          <div key={acc.type} className="flex justify-between items-center px-2">
-                             <span className="text-xs text-gray-500">{acc.type.replaceAll("_", " ")}</span>
-                             <span className="text-sm font-bold text-gray-700">${Number(acc.balance).toLocaleString()}</span>
-                          </div>
-                        ))}
+                        <div className="space-y-3 px-1">
+                          {portfolio.wallet.accounts.map((acc) => (
+                            <div key={acc.type} className="flex justify-between items-center opacity-80 group cursor-default">
+                               <span className="text-[11px] font-bold text-indigo-300 uppercase tracking-wide group-hover:text-white transition-colors">{acc.type.replaceAll("_", " ")}</span>
+                               <span className="text-sm font-black tabular-nums text-white">${Number(acc.balance).toLocaleString()}</span>
+                            </div>
+                          ))}
+                        </div>
                      </div>
 
                      <StripeTopUpPanel
@@ -171,9 +191,9 @@ export default function LenderDashboard() {
             </div>
           </div>
         ) : (
-          <div className="flex flex-col items-center justify-center py-20 grayscale opacity-50">
-             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
-             <p className="text-sm font-bold text-gray-500 uppercase tracking-widest">Hydrating Dashboard...</p>
+          <div className="flex flex-col items-center justify-center py-40">
+             <div className="w-16 h-16 border-4 border-indigo-100 border-t-indigo-600 rounded-full animate-spin mb-6"></div>
+             <p className="text-xs font-black text-slate-400 uppercase tracking-[0.25em]">Initialising Institutional Access...</p>
           </div>
         )}
       </section>
@@ -181,4 +201,5 @@ export default function LenderDashboard() {
     </main>
   );
 }
+
 
