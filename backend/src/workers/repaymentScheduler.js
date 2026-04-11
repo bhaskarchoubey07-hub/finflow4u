@@ -42,12 +42,12 @@ function startRepaymentScheduler() {
         // 1.1 Try Automated Deduction if enabled
         if (borrower.autoRepay) {
            try {
+             // WalletType is likely imported or needs to be
              const wallet = await prisma.wallet.findUnique({
-               where: { userId_type: { userId: borrower.id, type: WalletType.BORROWER } }
+               where: { userId_type: { userId: borrower.id, type: "BORROWER" } }
              });
 
              if (wallet && Number(wallet.balance) >= Number(repayment.amountPaid)) {
-                // Execute auto-deduction logic
                 const { processRepayment } = require("../services/repaymentService");
                 await processRepayment({
                   borrowerId: borrower.id,
@@ -56,7 +56,7 @@ function startRepaymentScheduler() {
                 });
                 
                 console.log(`Auto-deducted EMI for loan ${repayment.loanId} borrower ${borrower.id}`);
-                continue; // Skip overdue logic for this repayment
+                continue; 
              }
            } catch (autoErr) {
              console.error("Auto-deduction failed:", autoErr);
@@ -64,7 +64,11 @@ function startRepaymentScheduler() {
         }
 
         // 1.2 Mark as OVERDUE if the date has passed
-
+        await prisma.repayment.update({
+          where: { id: repayment.id },
+          data: { status: "OVERDUE" }
+        });
+      }
 
       // 2. Identify Potential Defaults (e.g., 30 days overdue)
       const defaultCheckDate = new Date();
@@ -72,10 +76,10 @@ function startRepaymentScheduler() {
 
       const riskyLoans = await prisma.loanRequest.findMany({
         where: {
-          status: LoanStatus.ACTIVE,
+          status: "ACTIVE",
           repayments: {
             some: {
-              status: RepaymentStatus.OVERDUE,
+              status: "OVERDUE",
               dueDate: {
                 lte: defaultCheckDate
               }
@@ -87,7 +91,7 @@ function startRepaymentScheduler() {
       for (const loan of riskyLoans) {
         await prisma.loanRequest.update({
           where: { id: loan.id },
-          data: { status: LoanStatus.DEFAULTED }
+          data: { status: "DEFAULTED" }
         });
         
         console.log(`Loan ${loan.id} marked as DEFAULTED.`);

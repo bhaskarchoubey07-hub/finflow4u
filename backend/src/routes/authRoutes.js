@@ -7,27 +7,6 @@ const { authenticate } = require("../middleware/auth");
 
 const router = express.Router();
 
-// ... (schemas stay same)
-
-/**
- * @swagger
- * /auth/kyc-upload:
- *   post:
- *     summary: Upload KYC documents
- */
-router.post("/kyc-upload", authenticate, asyncHandler(kycUpload));
-
-/**
- * @swagger
- * /auth/preferences:
- *   post:
- *     summary: Update user preferences (auto-repay)
- */
-router.post("/preferences", authenticate, asyncHandler(updatePreferences));
-
-router.post("/register", validate(registerSchema), asyncHandler(register));
-
-
 const registerSchema = z.object({
   body: z.object({
     name: z.string().min(2),
@@ -60,6 +39,22 @@ const resetPasswordSchema = z.object({
     newPassword: z.string().min(8).regex(/[A-Z]/).regex(/[0-9]/)
   })
 });
+
+/**
+ * @swagger
+ * /auth/kyc-upload:
+ *   post:
+ *     summary: Upload KYC documents
+ */
+router.post("/kyc-upload", authenticate, asyncHandler(kycUpload));
+
+/**
+ * @swagger
+ * /auth/preferences:
+ *   post:
+ *     summary: Update user preferences (auto-repay)
+ */
+router.post("/preferences", authenticate, asyncHandler(updatePreferences));
 
 /**
  * @swagger
